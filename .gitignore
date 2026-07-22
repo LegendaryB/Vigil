@@ -1,0 +1,25 @@
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+
+## Visual Studio / JetBrains Rider / .NET Standard Ignore
+
+# Build & Output
+bin/
+obj/
+out/
+
+# JetBrains Rider & VS Code
+.idea/
+.vscode/
+*.DotSettings.user
+
+# User-specific files (Visual Studio)
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# App Settings (Lokal)
+appsettings.Development.json

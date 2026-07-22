@@ -1,0 +1,7 @@
+﻿services:
+  vigil:
+    image: vigil
+    build:
+      context: .
+      dockerfile: src/Vigil/Dockerfile
+

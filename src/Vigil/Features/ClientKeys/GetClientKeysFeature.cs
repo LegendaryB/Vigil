@@ -1,5 +1,7 @@
-﻿using Vigil.Domain.ClientKeys;
+﻿using Microsoft.AspNetCore.Mvc;
+using Vigil.Domain.ClientKeys;
 using Vigil.Endpoints;
+using Vigil.Endpoints.Security;
 
 namespace Vigil.Features.ClientKeys;
 
@@ -16,8 +18,12 @@ internal class GetClientKeysFeature : IEndpoint
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet(RoutePrefix + "/", (ClientKeyRepository repository) =>
+        app.MapGet(RoutePrefix + "/", (
+                ClientKeyRepository repository,
+                [FromServices] ILogger<GetClientKeysFeature> logger) =>
             {
+                logger.LogGetClientKeysRequest();
+
                 var keys = repository.Get();
 
                 var response = keys.Select(k => new GetClientKeyResponse(
@@ -25,10 +31,13 @@ internal class GetClientKeysFeature : IEndpoint
                     k.ClientName,
                     k.ApiKey,
                     k.CreatedAt
-                ));
+                )).ToList();
+
+                logger.LogGetClientKeysSuccess(response.Count);
 
                 return Results.Ok(response);
             })
+            .AddEndpointFilter<AdminKeyAuthFilter>()
             .WithName("GetClientKeys")
             .WithSummary("Gets all client API-Keys.");
     }

@@ -6,23 +6,27 @@ using Vigil.Domain.Errors.Security;
 
 namespace Vigil.Endpoints.Security;
 
-internal sealed class AdminKeyAuthFilter(IOptions<VigilOptions> options) : IEndpointFilter
+internal sealed class AdminKeyAuthFilter(
+    IOptions<VigilOptions> options,
+    ILogger<AdminKeyAuthFilter> logger) : IEndpointFilter
 {
-    private const string HeaderName = "X-Admin-Key";
-
     private readonly string _configuredAdminKey = options.Value.AdminKey;
 
     public async ValueTask<object?> InvokeAsync(
         EndpointFilterInvocationContext context,
         EndpointFilterDelegate next)
     {
-        if (!TryGetSingleHeaderValue(context, out var providedKey) ||
-            !IsAdminKeyValid(providedKey, _configuredAdminKey))
+        if (TryGetSingleHeaderValue(context, out var providedKey) &&
+            IsAdminKeyValid(providedKey, _configuredAdminKey))
         {
-            return SecurityErrorCatalog.AdminKeyInvalid().ToProblemDetails();
+            return await next(context);
         }
-
-        return await next(context);
+        
+        logger.LogAdminKeyRejected(context.HttpContext.Request.Path);
+        
+        return SecurityErrorCatalog
+            .AdminKeyInvalid()
+            .ToProblemDetails();
     }
 
     private static bool TryGetSingleHeaderValue(
@@ -31,7 +35,7 @@ internal sealed class AdminKeyAuthFilter(IOptions<VigilOptions> options) : IEndp
     {
         value = string.Empty;
         
-        var headerValues = context.HttpContext.Request.Headers[HeaderName];
+        var headerValues = context.HttpContext.Request.Headers[AdminKeySecurityScheme.HeaderName];
 
         if (headerValues.Count != 1 || string.IsNullOrEmpty(headerValues[0]))
             return false;

@@ -67,7 +67,7 @@ internal class CreateClientKeyFeature : IEndpoint
 
                 return responseResult.ToProblemDetails();
             })
-            .AddEndpointFilter<AdminKeyAuthFilter>()
+            .RequireAdminKey()
             .WithName("CreateClientKey")
             .WithSummary("Creates a new API-Key for a client.");
     }

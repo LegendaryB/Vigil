@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Ardalis.Result;
 using Microsoft.Extensions.Options;
@@ -13,7 +14,8 @@ public class ClientKeyRepository
     private readonly ILogger<ClientKeyRepository> _logger;
     
     private readonly ConcurrentDictionary<Guid, ClientKey> _keys = new();
-    
+
+    private readonly SemaphoreSlim _keysLock = new(1, 1);
     private readonly SemaphoreSlim _fileLock = new(1, 1);
     private readonly JsonSerializerOptions _serializerOptions = new() { WriteIndented = true };
 
@@ -35,41 +37,64 @@ public class ClientKeyRepository
         string clientName,
         CancellationToken cancellationToken)
     {
-        var exists = _keys.Values.Any(
-            k => k.ClientName.Equals(clientName, StringComparison.OrdinalIgnoreCase));
+        await _keysLock.WaitAsync(cancellationToken);
 
-        if (exists)
+        ClientKey clientKey;
+
+        try
         {
-            _logger.LogClientNameAlreadyExists(clientName);
-            return ErrorCatalog.ClientKey.ClientNameMustBeUnique();
+            var exists = _keys.Values.Any(
+                k => k.ClientName.Equals(clientName, StringComparison.OrdinalIgnoreCase));
+
+            if (exists)
+            {
+                _logger.LogClientNameAlreadyExists(clientName);
+                return ErrorCatalog.ClientKey.ClientNameMustBeUnique();
+            }
+
+            clientKey = new ClientKey(
+                Guid.NewGuid(),
+                clientName,
+                GenerateApiKey(),
+                DateTime.UtcNow
+            );
+
+            _keys[clientKey.Id] = clientKey;
+        }
+        finally
+        {
+            _keysLock.Release();
         }
 
-        var clientKey = new ClientKey(
-            Guid.NewGuid(),
-            clientName,
-            GenerateApiKey(),
-            DateTime.UtcNow
-        );
-
-        _keys[clientKey.Id] = clientKey;
-        
         _logger.LogClientKeyCreated(clientKey.ClientName, clientKey.Id);
 
         await SaveToJsonFileAsync(cancellationToken);
 
         return Result.Success(clientKey);
     }
-    
+
     public async Task<Result> DeleteKeyAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
-        if (id == Guid.Empty || !_keys.TryRemove(id, out var removedKey))
+        ClientKey removedKey;
+
+        await _keysLock.WaitAsync(cancellationToken);
+
+        try
         {
-            _logger.LogClientKeyNotFoundForDeletion(id);
-            return ErrorCatalog.ClientKey.NotFound(id);
+            if (id == Guid.Empty || !_keys.TryRemove(id, out removedKey!))
+            {
+                _logger.LogClientKeyNotFoundForDeletion(id);
+                
+                return ErrorCatalog.ClientKey.NotFound(id);
+            }
         }
-        
+        finally
+        {
+            _keysLock.Release();
+        }
+
         _logger.LogClientKeyDeleted(removedKey.ClientName, id);
 
         await SaveToJsonFileAsync(cancellationToken);
@@ -88,10 +113,14 @@ public class ClientKeyRepository
                 _keys.Values,
                 _serializerOptions);
 
+            var tempFilePath = _filePath + ".tmp";
+
             await File.WriteAllTextAsync(
-                _filePath,
+                tempFilePath,
                 content,
                 cancellationToken);
+
+            File.Move(tempFilePath, _filePath, overwrite: true);
 
             _logger.LogKeysPersisted(
                 _keys.Count,
@@ -145,5 +174,5 @@ public class ClientKeyRepository
         }
     }
 
-    private static string GenerateApiKey() => Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+    private static string GenerateApiKey() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
 }

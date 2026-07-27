@@ -1,8 +1,10 @@
 using FluentValidation;
 using Microsoft.Extensions.Options;
+using Scalar.AspNetCore;
 using Vigil.Configuration;
 using Vigil.Domain.ClientKeys;
 using Vigil.Endpoints;
+using Vigil.Endpoints.Security;
 
 namespace Vigil;
 
@@ -16,7 +18,7 @@ public static class Program
             .Configure<VigilOptions>(builder.Configuration.Bind)
             .AddSingleton<IValidateOptions<VigilOptions>, VigilOptionsValidator>()
             .AddSingleton<ClientKeyRepository>()
-            .AddOpenApi()
+            .AddOpenApi(options => options.AddAdminKeySecurityScheme())
             .AddProblemDetails()
             .AddValidatorsFromAssemblyContaining(typeof(Program), includeInternalTypes: true);
 
@@ -27,7 +29,15 @@ public static class Program
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
+        {
             app.MapOpenApi();
+            app.MapScalarApiReference(options => options
+                .AddPreferredSecuritySchemes(AdminKeySecurityScheme.SchemeId)
+                .AddApiKeyAuthentication(AdminKeySecurityScheme.SchemeId, apiKey =>
+                {
+                    apiKey.Value = "";
+                }));
+        }
         
         await app
             .MapEndpoints()

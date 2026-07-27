@@ -37,7 +37,7 @@ internal class GetClientKeysFeature : IEndpoint
 
                 return Results.Ok(response);
             })
-            .AddEndpointFilter<AdminKeyAuthFilter>()
+            .RequireAdminKey()
             .WithName("GetClientKeys")
             .WithSummary("Gets all client API-Keys.");
     }

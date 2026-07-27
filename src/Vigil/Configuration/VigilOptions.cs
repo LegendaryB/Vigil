@@ -3,8 +3,8 @@
 public class VigilOptions
 {
     public string DataDirectory { get; set; } = "./data";
-    
-    public string AdminKey { get; set; } = string.Empty;
+
+    public string AdminKey { get; set; } = "Development";
 
     private string ExpandedDataDirectory => Path.GetFullPath(Environment.ExpandEnvironmentVariables(DataDirectory));
 

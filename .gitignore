@@ -23,3 +23,6 @@ out/
 
 # App Settings (Lokal)
 appsettings.Development.json
+
+# Runtime data (contains secrets - client API keys, etc.)
+data/

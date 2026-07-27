@@ -32,7 +32,7 @@ internal class DeleteClientKeyFeature : IEndpoint
 
                 return deleteResult.ToProblemDetails();
             })
-            .AddEndpointFilter<AdminKeyAuthFilter>()
+            .RequireAdminKey()
             .WithName("DeleteClientKey")
             .WithSummary("Deletes an existing client key.");
     }

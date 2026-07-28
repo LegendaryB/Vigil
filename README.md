@@ -44,12 +44,31 @@ admin key.
 
 Check-in/check-out endpoints for clients are not implemented yet.
 
+### Interactive API docs
+
+In the `Development` environment, Vigil serves an OpenAPI document at
+`/openapi/v1.json` and an interactive Scalar UI at `/scalar/v1`. The admin
+key can be entered once in Scalar's "Authentication" panel and it's then
+sent automatically as `X-Admin-Key` on every request you try from there.
+
 ## Configuration
 
 Vigil is configured via standard ASP.NET Core configuration (e.g.
 environment variables, `appsettings.json`):
 
-| Setting         | Description                                      | Default     |
-|------------------|--------------------------------------------------|-------------|
-| `DataDirectory`  | Directory where Vigil stores its JSON data files | `./data`    |
-| `AdminKey`       | Shared secret required to call admin endpoints   | *(required)* |
+| Setting         | Description                                      | Default      |
+|-----------------|---------------------------------------------------|--------------|
+| `DataDirectory` | Directory where Vigil stores its JSON data files  | `./data`     |
+| `AdminKey`      | Shared secret required to call admin endpoints    | *(required)* |
+
+`AdminKey` has no default and startup fails immediately if it isn't set —
+admin-protected endpoints must never run with a fallback key.
+
+## Logging
+
+Vigil logs via Serilog to both the console and rolling daily files under
+`logs/` (14-day retention, capped at 10 MB per file before rolling again).
+Every HTTP request is logged, alongside the more detailed domain-level
+logging in each feature (client key created/deleted, rejected admin-key
+attempts, etc.). Log level and sinks are configured under the `Serilog`
+section in `appsettings.json`.

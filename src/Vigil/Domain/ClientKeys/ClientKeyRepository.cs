@@ -1,177 +1,84 @@
-﻿using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using System.Text.Json;
 using Ardalis.Result;
 using Microsoft.Extensions.Options;
 using Vigil.Configuration;
+using Vigil.Domain.Data;
 using Vigil.Domain.Errors;
 using Vigil.Domain.Errors.ClientKeys;
 
 namespace Vigil.Domain.ClientKeys;
 
-internal sealed class ClientKeyRepository
+internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
 {
-    private readonly ILogger<ClientKeyRepository> _logger;
-    
-    private readonly ConcurrentDictionary<Guid, ClientKey> _keys = new();
-
-    private readonly SemaphoreSlim _keysLock = new(1, 1);
-    private readonly SemaphoreSlim _fileLock = new(1, 1);
-    private readonly JsonSerializerOptions _serializerOptions = new() { WriteIndented = true };
-
-    private readonly string _filePath;
-    
-    public IReadOnlyList<ClientKey> Get() => _keys.Values.ToList();
+    protected override Func<ClientKey, Guid> PrimaryKeySelector => key => key.Id;
 
     public ClientKeyRepository(
         ILogger<ClientKeyRepository> logger,
         IOptions<VigilOptions> options)
+        : base(logger, options.Value.ClientKeysFilePath)
     {
-        _logger = logger;
-        _filePath = options.Value.ClientKeysFilePath;
-        
-        LoadFromJsonFile();
     }
-    
+
     public async Task<Result<ClientKey>> CreateKeyAsync(
         string clientName,
         CancellationToken cancellationToken)
     {
-        await _keysLock.WaitAsync(cancellationToken);
-
-        ClientKey clientKey;
-
-        try
+        var result = await MutateAsync(() =>
         {
-            var exists = _keys.Values.Any(
+            var exists = Entities.Values.Any(
                 k => k.ClientName.Equals(clientName, StringComparison.OrdinalIgnoreCase));
 
             if (exists)
             {
-                _logger.LogClientNameAlreadyExists(clientName);
+                Logger.LogClientNameAlreadyExists(clientName);
                 return ErrorCatalog.ClientKey.ClientNameMustBeUnique();
             }
 
-            clientKey = new ClientKey(
+            var clientKey = new ClientKey(
                 Guid.NewGuid(),
                 clientName,
                 GenerateApiKey(),
                 DateTime.UtcNow
             );
 
-            _keys[clientKey.Id] = clientKey;
-        }
-        finally
-        {
-            _keysLock.Release();
-        }
+            Entities[clientKey.Id] = clientKey;
 
-        _logger.LogClientKeyCreated(clientKey.ClientName, clientKey.Id);
+            return Result.Success(clientKey);
+        }, cancellationToken);
 
-        await SaveToJsonFileAsync(cancellationToken);
+        if (!result.IsSuccess)
+            return result;
 
-        return Result.Success(clientKey);
+        Logger.LogClientKeyCreated(result.Value.ClientName, result.Value.Id);
+
+        await PersistAsync(cancellationToken);
+
+        return result;
     }
 
     public async Task<Result> DeleteKeyAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
-        ClientKey removedKey;
-
-        await _keysLock.WaitAsync(cancellationToken);
-
-        try
+        var result = await MutateAsync(() =>
         {
-            if (id == Guid.Empty || !_keys.TryRemove(id, out removedKey!))
+            if (id == Guid.Empty || !Entities.TryRemove(id, out var removedKey))
             {
-                _logger.LogClientKeyNotFoundForDeletion(id);
-                
+                Logger.LogClientKeyNotFoundForDeletion(id);
                 return ErrorCatalog.ClientKey.NotFound(id);
             }
-        }
-        finally
-        {
-            _keysLock.Release();
-        }
 
-        _logger.LogClientKeyDeleted(removedKey.ClientName, id);
+            Logger.LogClientKeyDeleted(removedKey.ClientName, id);
 
-        await SaveToJsonFileAsync(cancellationToken);
+            return Result.Success();
+        }, cancellationToken);
 
-        return Result.Success();
-    }
+        if (!result.IsSuccess)
+            return result;
 
-    private async Task SaveToJsonFileAsync(
-        CancellationToken cancellationToken)
-    {
-        await _fileLock.WaitAsync(cancellationToken);
+        await PersistAsync(cancellationToken);
 
-        try
-        {
-            var content = JsonSerializer.Serialize(
-                _keys.Values,
-                _serializerOptions);
-
-            var tempFilePath = _filePath + ".tmp";
-
-            await File.WriteAllTextAsync(
-                tempFilePath,
-                content,
-                cancellationToken);
-
-            File.Move(tempFilePath, _filePath, overwrite: true);
-
-            _logger.LogKeysPersisted(
-                _keys.Count,
-                _filePath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogErrorSavingToFile(
-                ex,
-                _filePath);
-            
-            throw;
-        }
-        finally
-        {
-            _fileLock.Release();
-        }
-    }
-    
-    private void LoadFromJsonFile()
-    {
-        if (!File.Exists(_filePath))
-        {
-            _logger.LogFileNotFoundStartingEmpty(_filePath);
-            return;
-        }
-
-        try
-        {
-            var content = File.ReadAllText(_filePath);
-            var loadedKeys = JsonSerializer.Deserialize<List<ClientKey>>(content);
-
-            if (loadedKeys is null)
-            {
-                _logger.LogFileContentEmpty(_filePath);
-                return;
-            }
-
-            foreach (var key in loadedKeys)
-                _keys[key.Id] = key;
-
-            _logger.LogKeysLoadedFromFile(_keys.Count, _filePath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogErrorLoadingFromFile(ex, _filePath);
-            
-            throw new InvalidOperationException(
-                $"Failed to initialize ClientKeyRepository from '{_filePath}'. " +
-                "Application startup aborted to prevent data loss or invalid state.", ex);
-        }
+        return result;
     }
 
     private static string GenerateApiKey() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));

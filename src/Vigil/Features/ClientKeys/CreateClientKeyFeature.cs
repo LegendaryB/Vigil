@@ -10,7 +10,9 @@ namespace Vigil.Features.ClientKeys;
 internal class CreateClientKeyFeature : IEndpoint
 {
     public static string RoutePrefix => Routes.ClientKeys;
-    
+
+    public static string Tag => Tags.ClientKeys;
+
     internal record Request(string ClientName);
 
     private record Response(
@@ -68,6 +70,7 @@ internal class CreateClientKeyFeature : IEndpoint
                 return responseResult.ToProblemDetails();
             })
             .RequireAdminKey()
+            .WithTags(Tag)
             .WithName("CreateClientKey")
             .WithSummary("Creates a new API-Key for a client.");
     }

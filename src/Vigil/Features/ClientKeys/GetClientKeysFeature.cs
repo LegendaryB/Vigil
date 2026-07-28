@@ -8,7 +8,9 @@ namespace Vigil.Features.ClientKeys;
 internal class GetClientKeysFeature : IEndpoint
 {
     public static string RoutePrefix => Routes.ClientKeys;
-    
+
+    public static string Tag => Tags.ClientKeys;
+
     private record GetClientKeyResponse(
         Guid Id,
         string ClientName,
@@ -38,6 +40,7 @@ internal class GetClientKeysFeature : IEndpoint
                 return Results.Ok(response);
             })
             .RequireAdminKey()
+            .WithTags(Tag)
             .WithName("GetClientKeys")
             .WithSummary("Gets all client API-Keys.");
     }

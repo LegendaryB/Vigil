@@ -9,7 +9,13 @@ internal static class SecurityErrorCatalogExtensions
         internal static Result AdminKeyInvalid()
         {
             return Result.Unauthorized(
-                "A valid admin key is required to perform this action.");
+                SecurityErrorCatalog.AdminKeyInvalidMessage());
+        }
+
+        internal static Result ClientKeyInvalid()
+        {
+            return Result.Unauthorized(
+                SecurityErrorCatalog.ClientKeyInvalidMessage());
         }
     }
 }

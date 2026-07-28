@@ -27,9 +27,4 @@
       </Content>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="data\" />
-      <Folder Include="Domain\Tickets\" />
-    </ItemGroup>
-
 </Project>

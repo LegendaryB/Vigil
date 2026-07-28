@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using Vigil.Configuration;
 using Vigil.Domain.ClientKeys;
+using Vigil.Domain.Sessions;
 using Vigil.Endpoints;
 using Vigil.Endpoints.Security;
 
@@ -24,7 +25,10 @@ public static class Program
             .Configure<VigilOptions>(builder.Configuration.Bind)
             .AddSingleton<IValidateOptions<VigilOptions>, VigilOptionsValidator>()
             .AddSingleton<ClientKeyRepository>()
-            .AddOpenApi(options => options.AddAdminKeySecurityScheme())
+            .AddSingleton<SessionRepository>()
+            .AddOpenApi(options => options
+                .AddAdminKeySecurityScheme()
+                .AddClientKeySecurityScheme())
             .AddProblemDetails()
             .AddValidatorsFromAssemblyContaining(typeof(Program), includeInternalTypes: true);
 
@@ -40,8 +44,12 @@ public static class Program
         {
             app.MapOpenApi();
             app.MapScalarApiReference(options => options
-                .AddPreferredSecuritySchemes(AdminKeySecurityScheme.SchemeId)
+                .AddPreferredSecuritySchemes(AdminKeySecurityScheme.SchemeId, ClientKeySecurityScheme.SchemeId)
                 .AddApiKeyAuthentication(AdminKeySecurityScheme.SchemeId, apiKey =>
+                {
+                    apiKey.Value = "";
+                })
+                .AddApiKeyAuthentication(ClientKeySecurityScheme.SchemeId, apiKey =>
                 {
                     apiKey.Value = "";
                 }));

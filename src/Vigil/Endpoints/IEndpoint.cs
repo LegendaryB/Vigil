@@ -3,6 +3,8 @@
 public interface IEndpoint
 {
     static abstract string RoutePrefix { get; }
-    
+
+    static abstract string Tag { get; }
+
     static abstract void MapEndpoint(IEndpointRouteBuilder app);
 }

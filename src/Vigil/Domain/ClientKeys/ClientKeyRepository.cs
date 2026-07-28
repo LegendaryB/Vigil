@@ -9,7 +9,7 @@ using Vigil.Domain.Errors.ClientKeys;
 
 namespace Vigil.Domain.ClientKeys;
 
-public class ClientKeyRepository
+internal sealed class ClientKeyRepository
 {
     private readonly ILogger<ClientKeyRepository> _logger;
     

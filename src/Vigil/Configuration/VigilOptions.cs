@@ -1,13 +1,17 @@
-﻿namespace Vigil.Configuration;
+﻿using System.Diagnostics.CodeAnalysis;
 
-public class VigilOptions
+namespace Vigil.Configuration;
+
+[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+internal class VigilOptions
 {
-    public string DataDirectory { get; set; } = "./data";
+    public string DataDirectory { get; set; } = string.Empty;
 
-    public string AdminKey { get; set; } = "Development";
+    public string AdminKey { get; set; } = string.Empty;
 
     private string ExpandedDataDirectory => Path.GetFullPath(Environment.ExpandEnvironmentVariables(DataDirectory));
 
-    public string ClientKeysFilePath => Path.Combine(ExpandedDataDirectory, "client-keys.json");
-    public string TicketsFilePath => Path.Combine(ExpandedDataDirectory, "tickets.json");
+    internal string ClientKeysFilePath => Path.Combine(ExpandedDataDirectory, "client-keys.json");
+
+    internal string TicketsFilePath => Path.Combine(ExpandedDataDirectory, "tickets.json");
 }

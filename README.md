@@ -40,25 +40,25 @@ once every client has finished, or alert when a client goes silent.
 
 ## API
 
-Admin endpoints require an `Admin-Key` header matching the configured admin
-key. Client endpoints require a `Client-Key` header matching a client's own
-API key.
+All routes are versioned under `/api/v1`. Admin endpoints require an
+`Admin-Key` header matching the configured admin key. Client endpoints
+require a `Client-Key` header matching a client's own API key.
 
 ### Client Keys (admin-only)
 
-| Method | Route                     | Description                    |
-|--------|---------------------------|---------------------------------|
-| POST   | `/api/client-keys/`       | Create a new client API key    |
-| GET    | `/api/client-keys/`       | List all client API keys       |
-| DELETE | `/api/client-keys/{id}`   | Delete a client API key        |
+| Method | Route                        | Description                    |
+|--------|------------------------------|---------------------------------|
+| POST   | `/api/v1/client-keys/`       | Create a new client API key    |
+| GET    | `/api/v1/client-keys/`       | List all client API keys       |
+| DELETE | `/api/v1/client-keys/{id}`   | Delete a client API key        |
 
 ### Sessions
 
-| Method | Route                     | Auth        | Description                              |
-|--------|---------------------------|-------------|-------------------------------------------|
-| POST   | `/api/sessions/check-in`  | Client key  | Opens a session for the calling client    |
-| POST   | `/api/sessions/check-out` | Client key  | Closes the calling client's open session  |
-| GET    | `/api/sessions/`          | Admin key   | Lists all sessions (open and closed)      |
+| Method | Route                        | Auth        | Description                              |
+|--------|------------------------------|-------------|-------------------------------------------|
+| POST   | `/api/v1/sessions/check-in`  | Client key  | Opens a session for the calling client    |
+| POST   | `/api/v1/sessions/check-out` | Client key  | Closes the calling client's open session  |
+| GET    | `/api/v1/sessions/`          | Admin key   | Lists all sessions (open and closed)      |
 
 ### Interactive API docs
 

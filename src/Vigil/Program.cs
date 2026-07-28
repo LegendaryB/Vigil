@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using FluentValidation;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
@@ -26,6 +27,19 @@ public static class Program
             .AddSingleton<IValidateOptions<VigilOptions>, VigilOptionsValidator>()
             .AddSingleton<ClientKeyRepository>()
             .AddSingleton<SessionRepository>()
+            .AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'V";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
+        builder.Services
             .AddOpenApi(options => options
                 .AddAdminKeySecurityScheme()
                 .AddClientKeySecurityScheme())

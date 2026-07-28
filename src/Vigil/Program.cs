@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
+using Serilog;
 using Vigil.Configuration;
 using Vigil.Domain.ClientKeys;
 using Vigil.Endpoints;
@@ -13,6 +14,11 @@ public static class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateSlimBuilder(args);
+
+        builder.Host.UseSerilog((context, services, configuration) => configuration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext());
 
         builder.Services
             .Configure<VigilOptions>(builder.Configuration.Bind)
@@ -27,6 +33,8 @@ public static class Program
             .ValidateOnStart();
 
         var app = builder.Build();
+
+        app.UseSerilogRequestLogging();
 
         if (app.Environment.IsDevelopment())
         {

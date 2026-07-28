@@ -26,3 +26,6 @@ appsettings.Development.json
 
 # Runtime data (contains secrets - client API keys, etc.)
 data/
+
+# Runtime logs
+logs/

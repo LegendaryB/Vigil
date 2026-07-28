@@ -4,4 +4,7 @@
     build:
       context: .
       dockerfile: src/Vigil/Dockerfile
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
 

@@ -14,4 +14,6 @@ internal class VigilOptions
     internal string ClientKeysFilePath => Path.Combine(ExpandedDataDirectory, "client-keys.json");
 
     internal string SessionsFilePath => Path.Combine(ExpandedDataDirectory, "sessions.json");
+
+    internal string EventActionsFilePath => Path.Combine(ExpandedDataDirectory, "event-actions.json");
 }

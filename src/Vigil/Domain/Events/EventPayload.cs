@@ -1,0 +1,8 @@
+namespace Vigil.Domain.Events;
+
+internal record EventPayload(
+    VigilEventType Event,
+    string? ClientName,
+    Guid? ClientKeyId,
+    Guid? SessionId,
+    DateTime OccurredAt);

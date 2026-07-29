@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Asp.Versioning;
 using FluentValidation;
 using Microsoft.Extensions.Options;
@@ -5,6 +6,8 @@ using Scalar.AspNetCore;
 using Serilog;
 using Vigil.Configuration;
 using Vigil.Domain.ClientKeys;
+using Vigil.Domain.Events;
+using Vigil.Domain.Events.EventActions;
 using Vigil.Domain.Sessions;
 using Vigil.Endpoints;
 using Vigil.Endpoints.Security;
@@ -27,6 +30,13 @@ public static class Program
             .AddSingleton<IValidateOptions<VigilOptions>, VigilOptionsValidator>()
             .AddSingleton<ClientKeyRepository>()
             .AddSingleton<SessionRepository>()
+            .Configure<EventActionsOptions>(builder.Configuration.GetSection("EventActions"))
+            .AddSingleton<EventActionQueue>()
+            .AddSingleton<EventActionRepository>()
+            .AddHostedService<EventActionDispatchService>()
+            .AddHostedService<SessionOverdueMonitor>()
+            .AddHttpClient(nameof(EventActionDispatchService))
+            .Services
             .AddApiVersioning(options =>
             {
                 options.DefaultApiVersion = new ApiVersion(1);
@@ -43,14 +53,19 @@ public static class Program
             .AddOpenApi(options => options
                 .AddAdminKeySecurityScheme()
                 .AddClientKeySecurityScheme())
+            .AddExceptionHandler<JsonRequestExceptionHandler>()
             .AddProblemDetails()
-            .AddValidatorsFromAssemblyContaining(typeof(Program), includeInternalTypes: true);
+            .AddValidatorsFromAssemblyContaining(typeof(Program), includeInternalTypes: true)
+            .ConfigureHttpJsonOptions(options =>
+                options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         builder.Services
             .AddOptions<VigilOptions>()
             .ValidateOnStart();
 
         var app = builder.Build();
+
+        app.UseExceptionHandler();
 
         app.UseSerilogRequestLogging();
 

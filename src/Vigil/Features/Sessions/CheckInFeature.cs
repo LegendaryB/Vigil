@@ -1,5 +1,7 @@
 using Ardalis.Result;
 using Microsoft.AspNetCore.Mvc;
+using Vigil.Domain.Events;
+using Vigil.Domain.Events.EventActions;
 using Vigil.Domain.Sessions;
 using Vigil.Endpoints;
 using Vigil.Endpoints.Security;
@@ -24,6 +26,7 @@ internal class CheckInFeature : IEndpoint
         app.MapPost(RoutePrefix + "/check-in", async (
                 HttpContext httpContext,
                 [FromServices] SessionRepository repository,
+                [FromServices] EventActionQueue eventQueue,
                 [FromServices] ILogger<CheckInFeature> logger,
                 CancellationToken cancellationToken) =>
             {
@@ -40,6 +43,13 @@ internal class CheckInFeature : IEndpoint
                     logger.LogCheckInSucceeded(
                         client.ClientName,
                         checkInResult.Value.Id);
+
+                    eventQueue.Enqueue(new EventPayload(
+                        VigilEventType.ClientCheckedIn,
+                        checkInResult.Value.ClientName,
+                        checkInResult.Value.ClientKeyId,
+                        checkInResult.Value.Id,
+                        checkInResult.Value.CheckedInAt));
                 }
                 else
                 {

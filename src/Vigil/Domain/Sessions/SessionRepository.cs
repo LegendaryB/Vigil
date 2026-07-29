@@ -88,4 +88,6 @@ internal sealed class SessionRepository : JsonFileRepository<Session>
 
         return result;
     }
+
+    internal bool HasAnyOpenSession() => Entities.Values.Any(s => s.CheckedOutAt is null);
 }

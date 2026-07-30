@@ -53,7 +53,8 @@ public static class Program
         builder.Services
             .AddOpenApi(options => options
                 .AddAdminKeySecurityScheme()
-                .AddClientKeySecurityScheme())
+                .AddClientKeySecurityScheme()
+                .AddUniqueNestedTypeSchemaIds())
             .AddExceptionHandler<JsonRequestExceptionHandler>()
             .AddProblemDetails()
             .AddValidatorsFromAssemblyContaining(typeof(Program), includeInternalTypes: true)

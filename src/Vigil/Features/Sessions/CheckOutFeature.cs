@@ -19,7 +19,8 @@ internal class CheckOutFeature : IEndpoint
         Guid ClientKeyId,
         string ClientName,
         DateTime CheckedInAt,
-        DateTime? CheckedOutAt
+        DateTime? CheckedOutAt,
+        IReadOnlyDictionary<string, string>? Metadata
     );
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -50,7 +51,8 @@ internal class CheckOutFeature : IEndpoint
                         checkOutResult.Value.ClientName,
                         checkOutResult.Value.ClientKeyId,
                         checkOutResult.Value.Id,
-                        checkOutResult.Value.CheckedOutAt!.Value));
+                        checkOutResult.Value.CheckedOutAt!.Value,
+                        checkOutResult.Value.Metadata));
 
                     if (!repository.HasAnyOpenSession())
                     {
@@ -72,7 +74,8 @@ internal class CheckOutFeature : IEndpoint
                     session.ClientKeyId,
                     session.ClientName,
                     session.CheckedInAt,
-                    session.CheckedOutAt
+                    session.CheckedOutAt,
+                    session.Metadata
                 ));
 
                 return responseResult.ToProblemDetails();

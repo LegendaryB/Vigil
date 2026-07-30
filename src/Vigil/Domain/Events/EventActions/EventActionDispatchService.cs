@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Vigil.Domain.Events;
 
 namespace Vigil.Domain.Events.EventActions;
 
@@ -48,13 +47,12 @@ internal sealed class EventActionDispatchService(
                 clientName = payload.ClientName,
                 clientKeyId = payload.ClientKeyId,
                 sessionId = payload.SessionId,
-                occurredAt = payload.OccurredAt
+                occurredAt = payload.OccurredAt,
+                metadata = payload.Metadata
             });
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, webhook.Url)
-            {
-                Content = new StringContent(body, Encoding.UTF8, "application/json")
-            };
+            using var request = new HttpRequestMessage(HttpMethod.Post, webhook.Url);
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
             if (webhook.Headers is not null)
             {
@@ -121,6 +119,12 @@ internal sealed class EventActionDispatchService(
             startInfo.Environment["VIGIL_SESSION_ID"] = payload.SessionId?.ToString() ?? string.Empty;
             startInfo.Environment["VIGIL_OCCURRED_AT"] = payload.OccurredAt.ToString("O");
 
+            if (payload.Metadata is not null)
+            {
+                foreach (var (key, value) in payload.Metadata)
+                    startInfo.Environment[$"VIGIL_METADATA_{SanitizeEnvironmentVariableKey(key)}"] = value;
+            }
+
             using var process = Process.Start(startInfo);
 
             if (process is null)
@@ -149,5 +153,14 @@ internal sealed class EventActionDispatchService(
         {
             logger.LogCommandDispatchError(ex, payload.Event, command);
         }
+    }
+
+    private static string SanitizeEnvironmentVariableKey(string key)
+    {
+        var sanitized = key.ToUpperInvariant()
+            .Select(c => char.IsAsciiLetterOrDigit(c) || c == '_' ? c : '_')
+            .ToArray();
+
+        return new string(sanitized);
     }
 }

@@ -13,7 +13,9 @@ finished" to a central place.
 
 Each client gets its own API key from an admin-only API. It uses that key
 to check in and check out; each pair is tracked as a session. A client can
-only have one open session at a time.
+only have one open session at a time. A client can attach its own metadata
+(a flat string map, e.g. job ID, host, version) when it checks in; it's
+stored with the session and carried into every event for it.
 
 Optionally, a webhook or local command can fire on check-in, check-out, or
 when a client is overdue (see below).
@@ -91,6 +93,14 @@ header; client endpoints need a `Client-Key` header.
 | GET    | `/api/v1/event-actions/`      | Admin   | List event actions            |
 | DELETE | `/api/v1/event-actions/{id}`  | Admin   | Delete an event action        |
 
+`check-in` takes an optional body: `{ "Metadata": { "jobId": "123" } }`.
+Up to 20 entries, keys up to 100 characters, values up to 500 — an empty
+body still works, `Metadata` just comes back `null`. It's echoed on the
+check-in/check-out responses and on `GET /sessions`, included in the
+webhook body as `metadata`, and passed to commands as
+`VIGIL_METADATA_<KEY>` environment variables (keys are uppercased, with
+any character outside `[A-Z0-9_]` replaced by `_`).
+
 In `Development`, there's a Scalar UI at `/scalar/v1` (OpenAPI JSON at
 `/openapi/v1.json`) where you can enter your admin/client key once and have
 it sent automatically.
@@ -116,9 +126,6 @@ retention, 10 MB per file). Configured under `Serilog` in
 ## Roadmap
 
 - Dependencies between event actions (run B only after A)
-- Session metadata: let a client attach arbitrary data (job ID, host,
-  version) on check-in, surfaced in `GET /sessions` and passed to event
-  actions
 
 Not planned: per-service payload formats (Discord, Slack, etc.) built into
 Vigil. A relay like [Apprise](https://github.com/caronc/apprise) fits

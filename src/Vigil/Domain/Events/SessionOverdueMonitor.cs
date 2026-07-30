@@ -55,7 +55,8 @@ internal sealed class SessionOverdueMonitor(
                 session.ClientName,
                 session.ClientKeyId,
                 session.Id,
-                now));
+                now,
+                session.Metadata));
         }
     }
 }

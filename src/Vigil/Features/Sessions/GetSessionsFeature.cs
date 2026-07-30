@@ -16,7 +16,8 @@ internal class GetSessionsFeature : IEndpoint
         Guid ClientKeyId,
         string ClientName,
         DateTime CheckedInAt,
-        DateTime? CheckedOutAt
+        DateTime? CheckedOutAt,
+        IReadOnlyDictionary<string, string>? Metadata
     );
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -34,7 +35,8 @@ internal class GetSessionsFeature : IEndpoint
                     s.ClientKeyId,
                     s.ClientName,
                     s.CheckedInAt,
-                    s.CheckedOutAt
+                    s.CheckedOutAt,
+                    s.Metadata
                 )).ToList();
 
                 logger.LogGetSessionsSuccess(response.Count);

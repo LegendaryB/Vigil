@@ -21,6 +21,7 @@ internal sealed class SessionRepository : JsonFileRepository<Session>
 
     public async Task<Result<Session>> CheckInAsync(
         ClientKey client,
+        IReadOnlyDictionary<string, string>? metadata,
         CancellationToken cancellationToken)
     {
         var result = await MutateAsync(() =>
@@ -39,7 +40,8 @@ internal sealed class SessionRepository : JsonFileRepository<Session>
                 client.Id,
                 client.ClientName,
                 DateTime.UtcNow,
-                null
+                null,
+                metadata
             );
 
             Entities[session.Id] = session;

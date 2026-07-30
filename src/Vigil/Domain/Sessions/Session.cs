@@ -5,4 +5,5 @@ public record Session(
     Guid ClientKeyId,
     string ClientName,
     DateTime CheckedInAt,
-    DateTime? CheckedOutAt);
+    DateTime? CheckedOutAt,
+    IReadOnlyDictionary<string, string>? Metadata = null);

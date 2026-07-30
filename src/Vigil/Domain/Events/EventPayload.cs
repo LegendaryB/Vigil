@@ -5,4 +5,5 @@ internal record EventPayload(
     string? ClientName,
     Guid? ClientKeyId,
     Guid? SessionId,
-    DateTime OccurredAt);
+    DateTime OccurredAt,
+    IReadOnlyDictionary<string, string>? Metadata = null);

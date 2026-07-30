@@ -28,5 +28,16 @@ internal static class SessionErrorCatalogExtensions
                 Severity = ValidationSeverity.Error
             });
         }
+
+        internal Result<Session> InvalidMetadata(string reason)
+        {
+            return Result<Session>.Invalid(new ValidationError
+            {
+                Identifier = nameof(Session.Metadata),
+                ErrorMessage = SessionErrorCatalog.InvalidMetadataMessage(reason),
+                ErrorCode = catalog.InvalidMetadataCode,
+                Severity = ValidationSeverity.Error
+            });
+        }
     }
 }

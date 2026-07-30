@@ -29,3 +29,6 @@ data/
 
 # Runtime logs
 logs/
+
+# Docker secrets (e.g. secrets/admin_key.txt)
+secrets/

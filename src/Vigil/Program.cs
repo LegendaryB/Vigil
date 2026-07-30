@@ -20,6 +20,8 @@ public static class Program
     {
         var builder = WebApplication.CreateSlimBuilder(args);
 
+        builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
+
         builder.Host.UseSerilog((context, services, configuration) => configuration
             .ReadFrom.Configuration(context.Configuration)
             .ReadFrom.Services(services)

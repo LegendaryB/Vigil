@@ -7,4 +7,11 @@
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+    secrets:
+      - source: admin_key
+        target: AdminKey
+
+secrets:
+  admin_key:
+    file: ./secrets/admin_key.txt
 

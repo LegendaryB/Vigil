@@ -117,6 +117,14 @@ variables, etc.):
 
 There's no fallback `AdminKey`. Vigil refuses to start without one set.
 
+Any setting can also come from a Docker secret: files under
+`/run/secrets/<Key>` (e.g. `/run/secrets/AdminKey`) are read as config
+values, so a secret can be mounted instead of set as a plain environment
+variable. `compose.yaml` does this for `AdminKey` already; create
+`secrets/admin_key.txt` (gitignored) with the raw key before running
+`docker compose up`. This is a no-op outside Docker (no `/run/secrets`,
+no effect).
+
 ## Logging
 
 Serilog, to console and to rolling daily files under `logs/` (14-day

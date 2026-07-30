@@ -30,7 +30,7 @@ public static class Program
             .AddSingleton<IValidateOptions<VigilOptions>, VigilOptionsValidator>()
             .AddSingleton<ClientKeyRepository>()
             .AddSingleton<SessionRepository>()
-            .Configure<EventActionsOptions>(builder.Configuration.GetSection("EventActions"))
+            .Configure<EventActionsOptions>(builder.Configuration.GetSection(EventActionsOptions.ConfigurationKey))
             .AddSingleton<EventActionQueue>()
             .AddSingleton<EventActionRepository>()
             .AddHostedService<EventActionDispatchService>()

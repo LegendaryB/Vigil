@@ -68,9 +68,11 @@ environment variables (`VIGIL_EVENT`, `VIGIL_CLIENT_NAME`, etc.) rather
 than substituted into arguments.
 
 Dispatch is queued and handled by a background worker, so it never blocks
-the request that triggered it. A failed webhook or command is logged and
-otherwise doesn't affect anything else (there's no retry yet, see
-Roadmap).
+the request that triggered it. Webhooks get 3 attempts with exponential
+backoff (honoring a `Retry-After` header if the receiver sends one) and a
+10s per-attempt timeout; only transient failures (connection errors,
+timeouts, 5xx) are retried, not 4xx. Commands aren't retried. A failed
+webhook or command is logged and otherwise doesn't affect anything else.
 
 ## API
 
@@ -113,7 +115,6 @@ retention, 10 MB per file). Configured under `Serilog` in
 
 ## Roadmap
 
-- Retry/backoff and an explicit timeout for webhook dispatch
 - SSRF hardening on webhook URLs
 - Dependencies between event actions (run B only after A)
 - Session metadata: let a client attach arbitrary data (job ID, host,

@@ -36,6 +36,7 @@ public static class Program
             .AddHostedService<EventActionDispatchService>()
             .AddHostedService<SessionOverdueMonitor>()
             .AddHttpClient(nameof(EventActionDispatchService))
+            .AddWebhookRetryHandler()
             .Services
             .AddApiVersioning(options =>
             {

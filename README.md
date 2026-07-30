@@ -115,7 +115,6 @@ retention, 10 MB per file). Configured under `Serilog` in
 
 ## Roadmap
 
-- SSRF hardening on webhook URLs
 - Dependencies between event actions (run B only after A)
 - Session metadata: let a client attach arbitrary data (job ID, host,
   version) on check-in, surfaced in `GET /sessions` and passed to event

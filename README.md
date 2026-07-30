@@ -11,26 +11,37 @@ finished" to a central place.
 
 ## Running Vigil
 
-With Docker Compose (the primary way to run it):
+With Docker Compose (the primary way to run it). There's no published
+image — `compose.yaml` builds it from source, so you need a local clone.
+
+### Clone the repository
+
+```bash
+git clone https://git.throwingbits.de/LegendaryB/Vigil.git
+cd Vigil
+```
+
+### Set the admin key as a Docker secret
 
 ```bash
 mkdir -p secrets
 echo -n "your-admin-key-here" > secrets/admin_key.txt
+```
+
+### Start it
+
+```bash
 docker compose up
 ```
 
-Vigil listens on `http://localhost:8080`. See
-[Configuration](#configuration) below for `AdminKey`/Docker secrets
-details.
-
-Without Docker:
+### Without Docker
 
 ```bash
 AdminKey=your-admin-key-here dotnet run --project src/Vigil
 ```
 
-This defaults to `http://localhost:5008` (see
-[launchSettings.json](src/Vigil/Properties/launchSettings.json)).
+Vigil listens on `http://localhost:8080`. See
+[Configuration](#configuration) below.
 
 ## How it works
 

@@ -9,6 +9,29 @@ all its clients had actually finished. The same pattern works for any job,
 scheduled task, or worker process that needs to report "I started" / "I
 finished" to a central place.
 
+## Running Vigil
+
+With Docker Compose (the primary way to run it):
+
+```bash
+mkdir -p secrets
+echo -n "your-admin-key-here" > secrets/admin_key.txt
+docker compose up
+```
+
+Vigil listens on `http://localhost:8080`. See
+[Configuration](#configuration) below for `AdminKey`/Docker secrets
+details.
+
+Without Docker:
+
+```bash
+AdminKey=your-admin-key-here dotnet run --project src/Vigil
+```
+
+This defaults to `http://localhost:5008` (see
+[launchSettings.json](src/Vigil/Properties/launchSettings.json)).
+
 ## How it works
 
 Each client gets its own API key from an admin-only API. It uses that key
@@ -25,11 +48,11 @@ when a client is overdue (see below).
 Vigil can trigger a webhook or a local command on:
 
 | Event                  | Fires when                                        |
-|-------------------------|----------------------------------------------------|
-| `ClientCheckedIn`      | A client checks in                                 |
-| `ClientCheckedOut`     | A client checks out                                |
-| `AllClientsCheckedOut` | A check-out leaves no client with an open session  |
-| `ClientOverdue`        | A session stays open longer than `CheckInTimeout`  |
+|------------------------|---------------------------------------------------|
+| `ClientCheckedIn`      | A client checks in                                |
+| `ClientCheckedOut`     | A client checks out                               |
+| `AllClientsCheckedOut` | A check-out leaves no client with an open session |
+| `ClientOverdue`        | A session stays open longer than `CheckInTimeout` |
 
 They're managed through the admin API. Create one with a `Target` of
 either a webhook or a command:
@@ -37,20 +60,29 @@ either a webhook or a command:
 ```json
 {
   "Event": "ClientCheckedOut",
-  "Target": { "$type": "webhook", "Url": "https://example.com/hook" }
+  "Target": {
+    "$type": "webhook",
+    "Url": "https://example.com/hook"
+  }
 }
 ```
 
 ```json
 {
   "Event": "ClientOverdue",
-  "Target": { "$type": "command", "Command": "notify-send", "Arguments": ["A client is overdue"] }
+  "Target": {
+    "$type": "command",
+    "Command": "notify-send",
+    "Arguments": [
+      "A client is overdue"
+    ]
+  }
 }
 ```
 
 `Name`, `Description`, and `Priority` (lower fires first, default `0`) are
-optional. `CheckInTimeout` lives under `EventActions` in `appsettings.json`
-and is `null` (disabled) by default.
+optional. `ClientOverdue` is disabled by default — see
+`EventActions:CheckInTimeout` under [Configuration](#configuration).
 
 Webhooks get a small JSON body (`event`, `clientName`, `clientKeyId`,
 `sessionId`, `occurredAt`). A webhook target can also take:
@@ -66,8 +98,16 @@ Both are returned in full on `GET`/`POST`, same as `ClientKey.ApiKey`
 elsewhere in the API. Nothing here is redacted.
 
 Commands run as a plain OS process (no shell), with event data passed via
-environment variables (`VIGIL_EVENT`, `VIGIL_CLIENT_NAME`, etc.) rather
-than substituted into arguments.
+environment variables rather than substituted into arguments:
+
+| Variable               | Value                                                                                                             |
+|------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `VIGIL_EVENT`          | Event name (e.g. `ClientCheckedIn`)                                                                               |
+| `VIGIL_CLIENT_NAME`    | Client name, empty if not applicable                                                                              |
+| `VIGIL_CLIENT_KEY_ID`  | Client key ID, empty if not applicable                                                                            |
+| `VIGIL_SESSION_ID`     | Session ID, empty if not applicable                                                                               |
+| `VIGIL_OCCURRED_AT`    | Timestamp the event occurred, ISO 8601                                                                            |
+| `VIGIL_METADATA_<KEY>` | One per session metadata entry (see below), key uppercased with any character outside `[A-Z0-9_]` replaced by `_` |
 
 Dispatch is queued and handled by a background worker, so it never blocks
 the request that triggered it. Webhooks get 3 attempts with exponential
@@ -81,19 +121,40 @@ webhook or command is logged and otherwise doesn't affect anything else.
 Everything's versioned under `/api/v1`. Admin endpoints need an `Admin-Key`
 header; client endpoints need a `Client-Key` header.
 
-| Method | Route                         | Auth    | Description                   |
-|--------|-------------------------------|---------|--------------------------------|
-| POST   | `/api/v1/client-keys/`        | Admin   | Create a client API key       |
-| GET    | `/api/v1/client-keys/`        | Admin   | List client API keys          |
-| DELETE | `/api/v1/client-keys/{id}`    | Admin   | Delete a client API key       |
-| POST   | `/api/v1/sessions/check-in`   | Client  | Open a session                |
-| POST   | `/api/v1/sessions/check-out`  | Client  | Close the open session        |
-| GET    | `/api/v1/sessions/`           | Admin   | List all sessions             |
-| POST   | `/api/v1/event-actions/`      | Admin   | Create an event action        |
-| GET    | `/api/v1/event-actions/`      | Admin   | List event actions            |
-| DELETE | `/api/v1/event-actions/{id}`  | Admin   | Delete an event action        |
+### Client Keys
 
-`check-in` takes an optional body: `{ "Metadata": { "jobId": "123" } }`.
+| Method | Route                      | Auth  | Description             |
+|--------|----------------------------|-------|-------------------------|
+| POST   | `/api/v1/client-keys/`     | Admin | Create a client API key |
+| GET    | `/api/v1/client-keys/`     | Admin | List client API keys    |
+| DELETE | `/api/v1/client-keys/{id}` | Admin | Delete a client API key |
+
+### Sessions
+
+| Method | Route                        | Auth   | Description            |
+|--------|------------------------------|--------|------------------------|
+| POST   | `/api/v1/sessions/check-in`  | Client | Open a session         |
+| POST   | `/api/v1/sessions/check-out` | Client | Close the open session |
+| GET    | `/api/v1/sessions/`          | Admin  | List all sessions      |
+
+### Event Actions
+
+| Method | Route                        | Auth  | Description            |
+|--------|------------------------------|-------|------------------------|
+| POST   | `/api/v1/event-actions/`     | Admin | Create an event action |
+| GET    | `/api/v1/event-actions/`     | Admin | List event actions     |
+| DELETE | `/api/v1/event-actions/{id}` | Admin | Delete an event action |
+
+`check-in` takes an optional body:
+
+```json
+{
+  "Metadata": {
+    "jobId": "123"
+  }
+}
+```
+
 Up to 20 entries, keys up to 100 characters, values up to 500 — an empty
 body still works, `Metadata` just comes back `null`. It's echoed on the
 check-in/check-out responses and on `GET /sessions`, included in the
@@ -110,10 +171,11 @@ it sent automatically.
 Standard ASP.NET Core configuration (`appsettings.json`, environment
 variables, etc.):
 
-| Setting         | Description                                | Default      |
-|-----------------|----------------------------------------------|--------------|
-| `DataDirectory` | Where Vigil stores its JSON data files       | `./data`     |
-| `AdminKey`      | Shared secret for admin endpoints             | *(required)* |
+| Setting                       | Description                                                                                     | Default      |
+|-------------------------------|-------------------------------------------------------------------------------------------------|--------------|
+| `DataDirectory`               | Where Vigil stores `client-keys.json`, `sessions.json`, `event-actions.json`                    | `./data`     |
+| `AdminKey`                    | Shared secret for admin endpoints                                                               | *(required)* |
+| `EventActions:CheckInTimeout` | How long a session can stay open before `ClientOverdue` fires; `null` disables overdue checking | `null`       |
 
 There's no fallback `AdminKey`. Vigil refuses to start without one set.
 
@@ -130,11 +192,3 @@ no effect).
 Serilog, to console and to rolling daily files under `logs/` (14-day
 retention, 10 MB per file). Configured under `Serilog` in
 `appsettings.json`.
-
-## Roadmap
-
-- Dependencies between event actions (run B only after A)
-
-Not planned: per-service payload formats (Discord, Slack, etc.) built into
-Vigil. A relay like [Apprise](https://github.com/caronc/apprise) fits
-better in front of the generic webhook.

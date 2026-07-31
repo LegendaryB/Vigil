@@ -108,8 +108,14 @@ Webhooks get a small JSON body (`event`, `clientName`, `clientKeyId`,
 Both are returned in full on `GET`/`POST`, same as `ClientKey.ApiKey`
 elsewhere in the API. Nothing here is redacted.
 
-Commands run as a plain OS process (no shell), with event data passed via
-environment variables rather than substituted into arguments:
+Commands run as a plain OS process (no shell). A command target can also
+take `Environment`: static environment variables set on every dispatch,
+for scripts that need their own config/secrets — same idea as a webhook's
+`Headers`. These can't override the `VIGIL_*` variables below; a
+colliding key is ignored in favor of the real event data.
+
+Event data itself is passed via environment variables rather than
+substituted into arguments:
 
 | Variable               | Value                                                                                                             |
 |------------------------|-------------------------------------------------------------------------------------------------------------------|

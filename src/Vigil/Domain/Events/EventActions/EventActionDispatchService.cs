@@ -27,7 +27,7 @@ internal sealed class EventActionDispatchService(
                         await DispatchWebhookAsync(webhook, payload, stoppingToken);
                         break;
                     case CommandTarget command:
-                        await DispatchCommandAsync(command.Command, command.Arguments, payload, stoppingToken);
+                        await DispatchCommandAsync(command, payload, stoppingToken);
                         break;
                 }
             }
@@ -94,8 +94,7 @@ internal sealed class EventActionDispatchService(
     }
 
     private async Task DispatchCommandAsync(
-        string command,
-        IReadOnlyList<string> arguments,
+        CommandTarget command,
         EventPayload payload,
         CancellationToken cancellationToken)
     {
@@ -103,15 +102,21 @@ internal sealed class EventActionDispatchService(
         {
             var startInfo = new ProcessStartInfo
             {
-                FileName = command,
+                FileName = command.Command,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
 
-            foreach (var argument in arguments)
+            foreach (var argument in command.Arguments)
                 startInfo.ArgumentList.Add(argument);
+
+            if (command.Environment is not null)
+            {
+                foreach (var (key, value) in command.Environment)
+                    startInfo.Environment[key] = value;
+            }
 
             startInfo.Environment["VIGIL_EVENT"] = payload.Event.ToString();
             startInfo.Environment["VIGIL_CLIENT_NAME"] = payload.ClientName ?? string.Empty;
@@ -129,7 +134,7 @@ internal sealed class EventActionDispatchService(
 
             if (process is null)
             {
-                logger.LogCommandDispatchFailed(payload.Event, command, -1);
+                logger.LogCommandDispatchFailed(payload.Event, command.Command, -1);
                 return;
             }
 
@@ -137,21 +142,21 @@ internal sealed class EventActionDispatchService(
 
             if (process.ExitCode == 0)
             {
-                logger.LogCommandDispatched(payload.Event, command);
+                logger.LogCommandDispatched(payload.Event, command.Command);
             }
             else
             {
-                logger.LogCommandDispatchFailed(payload.Event, command, process.ExitCode);
+                logger.LogCommandDispatchFailed(payload.Event, command.Command, process.ExitCode);
 
                 var stderr = await process.StandardError.ReadToEndAsync(cancellationToken);
 
                 if (!string.IsNullOrWhiteSpace(stderr))
-                    logger.LogCommandStandardError(payload.Event, command, stderr.Trim());
+                    logger.LogCommandStandardError(payload.Event, command.Command, stderr.Trim());
             }
         }
         catch (Exception ex)
         {
-            logger.LogCommandDispatchError(ex, payload.Event, command);
+            logger.LogCommandDispatchError(ex, payload.Event, command.Command);
         }
     }
 

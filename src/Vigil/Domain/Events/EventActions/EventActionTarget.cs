@@ -15,7 +15,10 @@ internal sealed record WebhookTarget(
     internal const string Discriminator = "webhook";
 }
 
-internal sealed record CommandTarget(string Command, IReadOnlyList<string> Arguments) : EventActionTarget
+internal sealed record CommandTarget(
+    string Command,
+    IReadOnlyList<string> Arguments,
+    IReadOnlyDictionary<string, string>? Environment = null) : EventActionTarget
 {
     internal const string Discriminator = "command";
 }

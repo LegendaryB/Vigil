@@ -82,6 +82,7 @@ All routes are under `/api/v1`.
 | POST   | `/sessions/check-out`           | `Client-Key`| none                                       | Fails if no open session                |
 | POST   | `/sessions/heartbeat`           | `Client-Key`| none                                       | Updates `LastSeenAt`; fails if no open session |
 | GET    | `/sessions/`                    | `Admin-Key` | none                                       | Lists all sessions (open + closed)      |
+| POST   | `/sessions/{id}/close`          | `Admin-Key` | none                                       | Force-closes an open session; doesn't require the client's own key. Fails if the session doesn't exist or is already closed |
 
 `Metadata` constraints: max 20 entries, keys ≤100 chars, values ≤500 chars (400 if exceeded). Stored with the session, echoed on check-in/check-out/`GET /sessions`, and forwarded into every event for that session (webhook `metadata` field / `VIGIL_METADATA_*` env vars).
 
@@ -99,7 +100,7 @@ Request/response body fields:
 
 | Field         | Type                                                                   | Required |
 |----------------|-------------------------------------------------------------------------|----------|
-| `Event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, or `ClientOverdue` | yes      |
+| `Event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, `ClientOverdue`, or `ClientForceCheckedOut` | yes      |
 | `Target`       | A webhook or command object, see below                                 | yes      |
 | `Name`         | string                                                                  | no       |
 | `Description`  | string                                                                  | no       |

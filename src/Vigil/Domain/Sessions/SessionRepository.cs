@@ -123,5 +123,40 @@ internal sealed class SessionRepository : JsonFileRepository<Session>
         return result;
     }
 
+    public async Task<Result<Session>> ForceCheckOutAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken)
+    {
+        var result = await MutateAsync(() =>
+        {
+            if (!Entities.TryGetValue(sessionId, out var session))
+            {
+                Logger.LogSessionNotFoundForForceCheckOut(sessionId);
+                return ErrorCatalog.Session.SessionNotFound(sessionId);
+            }
+
+            if (session.CheckedOutAt is not null)
+            {
+                Logger.LogSessionAlreadyClosed(sessionId);
+                return ErrorCatalog.Session.AlreadyClosed(sessionId);
+            }
+
+            var closedSession = session with { CheckedOutAt = DateTime.UtcNow };
+
+            Entities[closedSession.Id] = closedSession;
+
+            return Result.Success(closedSession);
+        }, cancellationToken);
+
+        if (!result.IsSuccess)
+            return result;
+
+        Logger.LogSessionForceClosed(result.Value.ClientName, result.Value.Id);
+
+        await PersistAsync(cancellationToken);
+
+        return result;
+    }
+
     internal bool HasAnyOpenSession() => Entities.Values.Any(s => s.CheckedOutAt is null);
 }

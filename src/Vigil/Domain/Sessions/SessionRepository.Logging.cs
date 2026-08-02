@@ -46,4 +46,26 @@ internal static partial class SessionRepositoryLogging
         this ILogger logger,
         string clientName,
         Guid sessionId);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to force-close session '{SessionId}': not found.")]
+    internal static partial void LogSessionNotFoundForForceCheckOut(
+        this ILogger logger,
+        Guid sessionId);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to force-close session '{SessionId}': already closed.")]
+    internal static partial void LogSessionAlreadyClosed(
+        this ILogger logger,
+        Guid sessionId);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Force-closed session for client '{ClientName}' with session ID '{SessionId}'.")]
+    internal static partial void LogSessionForceClosed(
+        this ILogger logger,
+        string clientName,
+        Guid sessionId);
 }

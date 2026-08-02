@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Microsoft.AspNetCore.Mvc;
+using Vigil.Domain.ClientKeys;
 using Vigil.Domain.Errors;
 using Vigil.Domain.Errors.Sessions;
 using Vigil.Domain.Events;
@@ -37,6 +38,7 @@ internal class CheckInFeature : IEndpoint
                 HttpContext httpContext,
                 [FromBody] Request? req,
                 [FromServices] SessionRepository repository,
+                [FromServices] ClientKeyRepository clientKeyRepository,
                 [FromServices] EventActionQueue eventQueue,
                 [FromServices] ILogger<CheckInFeature> logger,
                 CancellationToken cancellationToken) =>
@@ -64,6 +66,8 @@ internal class CheckInFeature : IEndpoint
                     logger.LogCheckInSucceeded(
                         client.ClientName,
                         checkInResult.Value.Id);
+
+                    await clientKeyRepository.RecordUsageAsync(client.Id, cancellationToken);
 
                     eventQueue.Enqueue(new EventPayload(
                         VigilEventType.ClientCheckedIn,

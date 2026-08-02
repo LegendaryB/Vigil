@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Microsoft.AspNetCore.Mvc;
+using Vigil.Domain.ClientKeys;
 using Vigil.Domain.Events;
 using Vigil.Domain.Events.EventActions;
 using Vigil.Domain.Sessions;
@@ -29,6 +30,7 @@ internal class CheckOutFeature : IEndpoint
         app.MapPost(RoutePrefix + "/check-out", async (
                 HttpContext httpContext,
                 [FromServices] SessionRepository repository,
+                [FromServices] ClientKeyRepository clientKeyRepository,
                 [FromServices] EventActionQueue eventQueue,
                 [FromServices] ILogger<CheckOutFeature> logger,
                 CancellationToken cancellationToken) =>
@@ -46,6 +48,8 @@ internal class CheckOutFeature : IEndpoint
                     logger.LogCheckOutSucceeded(
                         client.ClientName,
                         checkOutResult.Value.Id);
+
+                    await clientKeyRepository.RecordUsageAsync(client.Id, cancellationToken);
 
                     eventQueue.Enqueue(new EventPayload(
                         VigilEventType.ClientCheckedOut,

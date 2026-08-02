@@ -19,7 +19,8 @@ internal class CreateClientKeyFeature : IEndpoint
         Guid Id,
         string ClientName,
         string ApiKey,
-        DateTime CreatedAt
+        DateTime CreatedAt,
+        DateTime? LastUsedAt
     );
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -64,7 +65,8 @@ internal class CreateClientKeyFeature : IEndpoint
                     key.Id,
                     key.ClientName,
                     key.ApiKey,
-                    key.CreatedAt
+                    key.CreatedAt,
+                    key.LastUsedAt
                 ));
 
                 return responseResult.ToProblemDetails();

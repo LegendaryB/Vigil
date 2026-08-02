@@ -42,7 +42,7 @@ Dev mode exposes a Scalar UI at `/scalar/v1` and the OpenAPI doc at
 | `DataDirectory`                | Where `client-keys.json`, `sessions.json`, `event-actions.json` are stored | `./data`     |
 | `EventActions:CheckInTimeout`  | `TimeSpan` before an unresponsive session fires `ClientOverdue`. `null` disables it. | `null`       |
 
-Standard ASP.NET Core configuration sources (`appsettings.json`, env vars). Any
+Standard ASP.NET Core configuration sources (`appsettings.json`, environment variables). Any
 value can also be provided as a Docker secret file at `/run/secrets/<Key>`
 (e.g. `/run/secrets/AdminKey`); this is a no-op if that path doesn't exist.
 

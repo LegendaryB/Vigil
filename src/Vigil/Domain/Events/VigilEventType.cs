@@ -5,5 +5,6 @@ internal enum VigilEventType
     ClientCheckedIn,
     ClientCheckedOut,
     AllClientsCheckedOut,
-    ClientOverdue
+    ClientOverdue,
+    ClientForceCheckedOut
 }

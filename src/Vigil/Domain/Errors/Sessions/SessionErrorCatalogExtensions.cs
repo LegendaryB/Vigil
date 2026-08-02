@@ -39,5 +39,27 @@ internal static class SessionErrorCatalogExtensions
                 Severity = ValidationSeverity.Error
             });
         }
+
+        internal Result<Session> SessionNotFound(Guid id)
+        {
+            return Result<Session>.Invalid(new ValidationError
+            {
+                Identifier = nameof(Session.Id),
+                ErrorMessage = SessionErrorCatalog.SessionNotFoundMessage(id),
+                ErrorCode = catalog.EntityNotFound,
+                Severity = ValidationSeverity.Error
+            });
+        }
+
+        internal Result<Session> AlreadyClosed(Guid id)
+        {
+            return Result<Session>.Invalid(new ValidationError
+            {
+                Identifier = nameof(Session.CheckedOutAt),
+                ErrorMessage = SessionErrorCatalog.AlreadyClosedMessage(id),
+                ErrorCode = catalog.AlreadyClosedCode,
+                Severity = ValidationSeverity.Error
+            });
+        }
     }
 }

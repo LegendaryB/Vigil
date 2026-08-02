@@ -4,4 +4,5 @@ public record ClientKey(
     Guid Id,
     string ClientName,
     string ApiKey,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    DateTime? LastUsedAt = null);

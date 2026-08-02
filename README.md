@@ -72,6 +72,8 @@ All routes are under `/api/v1`.
 
 `ApiKey` is a base64-encoded 32-byte random value (`RandomNumberGenerator`), returned in full. It's never regenerated or masked.
 
+`GET /client-keys/` also returns `LastUsedAt`: the last time that key was used to check in or check out (not updated by `heartbeat`). `null` if the key has never been used, useful for spotting keys nobody's using anymore.
+
 ### Sessions
 
 | Method | Route                          | Auth        | Body                                   | Notes                                  |
@@ -159,4 +161,4 @@ Dispatch runs on a background queue and never blocks the triggering request. A f
 
 - Single-instance, file-backed storage (`ConcurrentDictionary` + JSON files under `DataDirectory`, guarded by an in-process semaphore). No clustering; running multiple instances against the same `DataDirectory` will corrupt state.
 - Command targets have no execution timeout and no retry; a hung script blocks that event's dispatch indefinitely.
-- API keys (`AdminKey`, client keys) don't expire or rotate. Revocation is delete-and-reissue (client keys) or change-and-restart (`AdminKey`).
+- API keys (`AdminKey`, client keys) don't expire or rotate. Revocation is delete-and-reissue (client keys) or change-and-restart (`AdminKey`). `LastUsedAt` on client keys helps spot unused ones manually.

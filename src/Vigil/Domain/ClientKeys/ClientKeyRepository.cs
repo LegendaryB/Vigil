@@ -81,5 +81,20 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
         return result;
     }
 
+    internal async Task RecordUsageAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var updated = await MutateAsync(() =>
+        {
+            if (!Entities.TryGetValue(id, out var clientKey))
+                return false;
+
+            Entities[id] = clientKey with { LastUsedAt = DateTime.UtcNow };
+            return true;
+        }, cancellationToken);
+
+        if (updated)
+            await PersistAsync(cancellationToken);
+    }
+
     private static string GenerateApiKey() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
 }

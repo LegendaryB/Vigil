@@ -15,7 +15,8 @@ internal class GetClientKeysFeature : IEndpoint
         Guid Id,
         string ClientName,
         string ApiKey,
-        DateTime CreatedAt
+        DateTime CreatedAt,
+        DateTime? LastUsedAt
     );
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -32,7 +33,8 @@ internal class GetClientKeysFeature : IEndpoint
                     k.Id,
                     k.ClientName,
                     k.ApiKey,
-                    k.CreatedAt
+                    k.CreatedAt,
+                    k.LastUsedAt
                 )).ToList();
 
                 logger.LogGetClientKeysSuccess(response.Count);

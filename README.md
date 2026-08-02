@@ -63,7 +63,7 @@ Vigil can trigger a webhook or a local command on:
 | `ClientCheckedIn`      | A client checks in                                |
 | `ClientCheckedOut`     | A client checks out                               |
 | `AllClientsCheckedOut` | A check-out leaves no client with an open session |
-| `ClientOverdue`        | A session stays open longer than `CheckInTimeout` |
+| `ClientOverdue`        | A session goes unheard-from longer than `CheckInTimeout` |
 
 They're managed through the admin API. Create one with a `Target` of
 either a webhook or a command:
@@ -93,7 +93,11 @@ either a webhook or a command:
 
 `Name`, `Description`, and `Priority` (lower fires first, default `0`) are
 optional. `ClientOverdue` is disabled by default — see
-`EventActions:CheckInTimeout` under [Configuration](#configuration).
+`EventActions:CheckInTimeout` under [Configuration](#configuration). The
+timeout is measured from whichever is more recent: check-in, or the last
+`POST /sessions/heartbeat` call — a long-running client can call
+`heartbeat` periodically to avoid being flagged overdue while it's still
+legitimately working.
 
 Webhooks get a small JSON body (`event`, `clientName`, `clientKeyId`,
 `sessionId`, `occurredAt`). A webhook target can also take:
@@ -148,11 +152,12 @@ header; client endpoints need a `Client-Key` header.
 
 ### Sessions
 
-| Method | Route                        | Auth   | Description            |
-|--------|------------------------------|--------|------------------------|
-| POST   | `/api/v1/sessions/check-in`  | Client | Open a session         |
-| POST   | `/api/v1/sessions/check-out` | Client | Close the open session |
-| GET    | `/api/v1/sessions/`          | Admin  | List all sessions      |
+| Method | Route                         | Auth   | Description                                        |
+|--------|--------------------------------|--------|------------------------------------------------------|
+| POST   | `/api/v1/sessions/check-in`   | Client | Open a session                                     |
+| POST   | `/api/v1/sessions/check-out`  | Client | Close the open session                             |
+| POST   | `/api/v1/sessions/heartbeat`  | Client | Push back the overdue deadline without closing it  |
+| GET    | `/api/v1/sessions/`           | Admin  | List all sessions                                  |
 
 ### Event Actions
 

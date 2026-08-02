@@ -27,6 +27,7 @@ internal class CheckInFeature : IEndpoint
         Guid ClientKeyId,
         string ClientName,
         DateTime CheckedInAt,
+        DateTime? LastSeenAt,
         IReadOnlyDictionary<string, string>? Metadata
     );
 
@@ -82,6 +83,7 @@ internal class CheckInFeature : IEndpoint
                     session.ClientKeyId,
                     session.ClientName,
                     session.CheckedInAt,
+                    session.LastSeenAt,
                     session.Metadata
                 ));
 

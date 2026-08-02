@@ -91,5 +91,37 @@ internal sealed class SessionRepository : JsonFileRepository<Session>
         return result;
     }
 
+    public async Task<Result<Session>> HeartbeatAsync(
+        ClientKey client,
+        CancellationToken cancellationToken)
+    {
+        var result = await MutateAsync(() =>
+        {
+            var openSession = Entities.Values.FirstOrDefault(
+                s => s.ClientKeyId == client.Id && s.CheckedOutAt is null);
+
+            if (openSession is null)
+            {
+                Logger.LogNoOpenSessionForHeartbeat(client.ClientName);
+                return ErrorCatalog.Session.NoOpenSession(client.ClientName);
+            }
+
+            var updatedSession = openSession with { LastSeenAt = DateTime.UtcNow };
+
+            Entities[updatedSession.Id] = updatedSession;
+
+            return Result.Success(updatedSession);
+        }, cancellationToken);
+
+        if (!result.IsSuccess)
+            return result;
+
+        Logger.LogHeartbeatReceived(result.Value.ClientName, result.Value.Id);
+
+        await PersistAsync(cancellationToken);
+
+        return result;
+    }
+
     internal bool HasAnyOpenSession() => Entities.Values.Any(s => s.CheckedOutAt is null);
 }

@@ -17,6 +17,7 @@ internal class GetSessionsFeature : IEndpoint
         string ClientName,
         DateTime CheckedInAt,
         DateTime? CheckedOutAt,
+        DateTime? LastSeenAt,
         IReadOnlyDictionary<string, string>? Metadata
     );
 
@@ -36,6 +37,7 @@ internal class GetSessionsFeature : IEndpoint
                     s.ClientName,
                     s.CheckedInAt,
                     s.CheckedOutAt,
+                    s.LastSeenAt,
                     s.Metadata
                 )).ToList();
 

@@ -42,8 +42,11 @@ internal sealed class SessionOverdueMonitor(
 
         foreach (var session in openSessions)
         {
-            if (now - session.CheckedInAt < timeout)
+            if (now - (session.LastSeenAt ?? session.CheckedInAt) < timeout)
+            {
+                _notifiedSessionIds.Remove(session.Id);
                 continue;
+            }
 
             if (!_notifiedSessionIds.Add(session.Id))
                 continue;

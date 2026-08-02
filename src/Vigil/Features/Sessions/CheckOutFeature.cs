@@ -20,6 +20,7 @@ internal class CheckOutFeature : IEndpoint
         string ClientName,
         DateTime CheckedInAt,
         DateTime? CheckedOutAt,
+        DateTime? LastSeenAt,
         IReadOnlyDictionary<string, string>? Metadata
     );
 
@@ -75,6 +76,7 @@ internal class CheckOutFeature : IEndpoint
                     session.ClientName,
                     session.CheckedInAt,
                     session.CheckedOutAt,
+                    session.LastSeenAt,
                     session.Metadata
                 ));
 

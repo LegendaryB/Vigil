@@ -6,4 +6,5 @@ public record Session(
     string ClientName,
     DateTime CheckedInAt,
     DateTime? CheckedOutAt,
-    IReadOnlyDictionary<string, string>? Metadata = null);
+    IReadOnlyDictionary<string, string>? Metadata = null,
+    DateTime? LastSeenAt = null);

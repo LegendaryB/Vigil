@@ -31,4 +31,19 @@ internal static partial class SessionRepositoryLogging
         this ILogger logger,
         string clientName,
         Guid sessionId);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to record heartbeat for client '{ClientName}': no open session found.")]
+    internal static partial void LogNoOpenSessionForHeartbeat(
+        this ILogger logger,
+        string clientName);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Recorded heartbeat for client '{ClientName}' with session ID '{SessionId}'.")]
+    internal static partial void LogHeartbeatReceived(
+        this ILogger logger,
+        string clientName,
+        Guid sessionId);
 }

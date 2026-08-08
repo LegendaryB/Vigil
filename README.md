@@ -34,6 +34,16 @@ AdminKey=your-admin-key-here dotnet run --project src/Vigil
 Dev mode exposes a Scalar UI at `/scalar/v1` and the OpenAPI doc at
 `/openapi/v1.json`.
 
+## Dashboard
+
+A small browser dashboard is available at `/ui` (always on, not dev-only).
+Log in with the admin key; it sets an `HttpOnly`, `SameSite=Strict`
+session cookie, separate from the `Admin-Key` header the JSON API uses.
+
+Covers Sessions (see who's checked in, filter/close stuck sessions, view
+metadata), Client Keys (create/delete), and Event Actions (create/delete
+webhook or command targets).
+
 ## Configuration
 
 | Setting                       | Description                                                  | Default      |

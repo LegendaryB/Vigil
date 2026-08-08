@@ -1,0 +1,8 @@
+@inherits RazorSlice<IReadOnlyList<ClientKey>>
+
+<tbody id="@DashboardStyles.ClientKeysTableBodyId">
+@foreach (var clientKey in Model.OrderByDescending(k => k.CreatedAt))
+{
+    @(await RenderPartialAsync<_Row, ClientKey>(clientKey))
+}
+</tbody>

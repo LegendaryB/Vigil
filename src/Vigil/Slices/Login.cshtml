@@ -1,0 +1,19 @@
+@inherits RazorSlice<LoginPageModel>
+@implements IUsesLayout<_Layout, LayoutModel>
+
+<div class="login-center">
+  <h1>Vigil</h1>
+  @if (Model.ShowError)
+  {
+    <p><strong>Invalid admin key.</strong></p>
+  }
+  <form method="post" action="@UiRoutes.Login">
+    <label for="adminKey">Admin key</label>
+    <input type="password" id="adminKey" name="adminKey" autofocus required>
+    <button type="submit">Log in</button>
+  </form>
+</div>
+
+@functions {
+    public LayoutModel LayoutModel => new("Log in", false);
+}

@@ -1,0 +1,27 @@
+@inherits RazorSlice<string?>
+
+@{
+    var error = Model;
+    var hasError = !string.IsNullOrEmpty(error);
+    var pageTarget = $"#{DashboardStyles.ClientKeysPageId}";
+    var touchOnBlur = $"this.classList.add('{DashboardStyles.Touched}')";
+}
+<dialog id="@DashboardStyles.CreateClientKeyDialogId" data-reopen="@hasError">
+  <form hx-post="@UiRoutes.ClientKeys" hx-target="@pageTarget" hx-swap="outerHTML"
+        oninput="this.querySelector('button[type=submit]').disabled = !this.checkValidity()">
+    @DashboardDialogs.BuildHeader("New client key")
+    <div class="@DashboardStyles.FormField">
+      <label>
+        Client name
+        <input type="text" name="clientName" placeholder="Client name" required onblur="@touchOnBlur" />
+      </label>
+    </div>
+    <div class="@DashboardStyles.DialogActions">
+      <button type="submit" disabled="disabled">Create</button>
+    </div>
+    @if (hasError)
+    {
+      @DashboardDialogs.BuildError(error!)
+    }
+  </form>
+</dialog>

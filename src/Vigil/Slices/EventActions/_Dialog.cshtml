@@ -1,0 +1,156 @@
+@inherits RazorSlice<EventActionDialogModel>
+
+@{
+    var existing = Model.Existing;
+    var readOnly = existing is not null;
+    var error = Model.Error;
+    var webhook = existing?.Target as WebhookTarget;
+    var command = existing?.Target as CommandTarget;
+    var hasError = !readOnly && !string.IsNullOrEmpty(error);
+
+    var toggleScript =
+        "var isWebhook = this.value === 'webhook';" +
+        $"document.getElementById('{DashboardStyles.WebhookFieldsId}').style.display = isWebhook ? '' : 'none';" +
+        $"document.getElementById('{DashboardStyles.CommandFieldsId}').style.display = isWebhook ? 'none' : '';" +
+        $"document.getElementById('{DashboardStyles.UrlInputId}').required = isWebhook;" +
+        $"document.getElementById('{DashboardStyles.CommandInputId}').required = !isWebhook;" +
+        $"document.getElementById(isWebhook ? '{DashboardStyles.UrlInputId}' : '{DashboardStyles.CommandInputId}').classList.add('{DashboardStyles.Touched}');" +
+        "var form = this.closest('form');" +
+        "form.querySelector('button[type=submit]').disabled = !form.checkValidity();";
+}
+<dialog id="@Model.DialogId" data-reopen="@hasError">
+  <form class="event-action-form"
+        hx-post="@(readOnly ? null : UiRoutes.EventActions)"
+        hx-target="@(readOnly ? null : $"#{DashboardStyles.EventActionsPageId}")"
+        hx-swap="@(readOnly ? null : "outerHTML")"
+        oninput="@(readOnly ? null : "this.querySelector('button[type=submit]').disabled = !this.checkValidity()")">
+    @DashboardDialogs.BuildHeader(Model.Heading)
+
+    <div class="@DashboardStyles.FormField">
+      <label>
+        Event
+        <select name="event" disabled="@readOnly">
+          @foreach (var eventType in Enum.GetValues<VigilEventType>())
+          {
+            <option value="@eventType" selected="@(existing?.Event == eventType)">@eventType</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="@DashboardStyles.FormField">
+      <label>
+        Target type
+        <select name="targetType" disabled="@readOnly" onchange="@(readOnly ? null : toggleScript)">
+          <option value="webhook" selected="@(TargetTypeValue(existing?.Target) == "webhook")">Webhook</option>
+          <option value="command" selected="@(TargetTypeValue(existing?.Target) == "command")">Command</option>
+        </select>
+      </label>
+    </div>
+
+    @if (!readOnly || webhook is not null)
+    {
+      <div id="@DashboardStyles.WebhookFieldsId" style="@((readOnly && TargetTypeValue(webhook) != "webhook") ? "display:none" : null)">
+        <div class="@DashboardStyles.FormField">
+          <label>
+            Webhook URL
+            <input type="text" name="url" placeholder="Webhook URL" value="@webhook?.Url"
+                   id="@(readOnly ? null : DashboardStyles.UrlInputId)"
+                   onblur="@(readOnly ? null : $"this.classList.add('{DashboardStyles.Touched}')")"
+                   required="@(!readOnly)" readonly="@readOnly" />
+          </label>
+        </div>
+        <div class="@DashboardStyles.FormField">
+          <label>
+            Secret
+            <input type="text" name="secret" placeholder="Secret" value="@webhook?.Secret" readonly="@readOnly" />
+          </label>
+        </div>
+        <div class="@DashboardStyles.FormField">
+          <label>
+            Headers, one per line as KEY=VALUE
+            <textarea name="headers" placeholder="Headers, one per line as KEY=VALUE" rows="3" readonly="@readOnly">@FormatDictionary(webhook?.Headers)</textarea>
+          </label>
+        </div>
+      </div>
+    }
+
+    @if (!readOnly || command is not null)
+    {
+      <div id="@DashboardStyles.CommandFieldsId" style="@((!readOnly || TargetTypeValue(command) != "command") ? "display:none" : null)">
+        <div class="@DashboardStyles.FormField">
+          <label>
+            Command
+            <input type="text" name="command" placeholder="Command" value="@command?.Command"
+                   id="@(readOnly ? null : DashboardStyles.CommandInputId)"
+                   onblur="@(readOnly ? null : $"this.classList.add('{DashboardStyles.Touched}')")"
+                   readonly="@readOnly" />
+          </label>
+        </div>
+        <div class="@DashboardStyles.FormField">
+          <label>
+            Arguments, one per line
+            <textarea name="arguments" placeholder="Arguments, one per line" rows="3" readonly="@readOnly">@FormatList(command?.Arguments)</textarea>
+          </label>
+        </div>
+        <div class="@DashboardStyles.FormField">
+          <label>
+            Environment variables, one per line as KEY=VALUE
+            <textarea name="environment" placeholder="Environment variables, one per line as KEY=VALUE" rows="3" readonly="@readOnly">@FormatDictionary(command?.Environment)</textarea>
+          </label>
+        </div>
+      </div>
+    }
+
+    <div class="@DashboardStyles.FormField">
+      <label>
+        Name
+        <input type="text" name="name" placeholder="Name" value="@existing?.Name" readonly="@readOnly" />
+      </label>
+    </div>
+    <div class="@DashboardStyles.FormField">
+      <label>
+        Description
+        <input type="text" name="description" placeholder="Description" value="@existing?.Description" readonly="@readOnly" />
+      </label>
+    </div>
+    <div class="@DashboardStyles.FormField">
+      <label>
+        Priority
+        <input type="number" name="priority" value="@(existing?.Priority ?? 0)" readonly="@readOnly" />
+      </label>
+    </div>
+
+    @if (readOnly)
+    {
+      @DashboardDialogs.BuildReadOnlyField("Id", existing!.Id.ToString())
+      @DashboardDialogs.BuildReadOnlyField("Created", existing!.CreatedAt.ToString("u"))
+    }
+    else
+    {
+      <div class="@DashboardStyles.DialogActions">
+        <button type="submit" disabled="disabled">Create</button>
+      </div>
+    }
+
+    @if (hasError)
+    {
+      @DashboardDialogs.BuildError(error!)
+    }
+  </form>
+</dialog>
+
+@functions {
+    private static string? TargetTypeValue(EventActionTarget? target) => target switch
+    {
+        WebhookTarget => "webhook",
+        CommandTarget => "command",
+        _ => null
+    };
+
+    private static string FormatDictionary(IReadOnlyDictionary<string, string>? dict) =>
+        dict is null || dict.Count == 0 ? string.Empty : string.Join("\n", dict.Select(kv => $"{kv.Key}={kv.Value}"));
+
+    private static string FormatList(IReadOnlyList<string>? list) =>
+        list is null || list.Count == 0 ? string.Empty : string.Join("\n", list);
+}

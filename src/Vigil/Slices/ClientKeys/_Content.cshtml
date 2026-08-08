@@ -1,0 +1,23 @@
+@inherits RazorSlice<ClientKeysIndexModel>
+
+@{
+    var openCreateDialogOnclick = $"vigilOpenDialog('{DashboardStyles.CreateClientKeyDialogId}')";
+}
+<div id="@DashboardStyles.ClientKeysPageId">
+  <div class="@DashboardStyles.DashboardToolbar">
+    <button type="button" onclick="@openCreateDialogOnclick">Create new client key</button>
+  </div>
+  @(await RenderPartialAsync<_CreateDialog, string?>(Model.Error))
+  <table>
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>API Key</th>
+        <th>Created</th>
+        <th>Last used</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    @(await RenderPartialAsync<_TableBody, IReadOnlyList<ClientKey>>(Model.ClientKeys))
+  </table>
+</div>

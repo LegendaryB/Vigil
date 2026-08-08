@@ -1,0 +1,8 @@
+@inherits RazorSlice<IReadOnlyList<Session>>
+
+<tbody id="@DashboardStyles.SessionsTableBodyId">
+@foreach (var session in Model.OrderByDescending(s => s.CheckedOutAt is null).ThenByDescending(s => s.CheckedInAt))
+{
+    @(await RenderPartialAsync<_Row, Session>(session))
+}
+</tbody>

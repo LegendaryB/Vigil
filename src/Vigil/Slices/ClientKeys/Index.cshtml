@@ -1,0 +1,8 @@
+@inherits RazorSlice<ClientKeysIndexModel>
+@implements IUsesLayout<_Layout, LayoutModel>
+
+@(await RenderPartialAsync<_Content, ClientKeysIndexModel>(Model))
+
+@functions {
+    public LayoutModel LayoutModel => new("Client Keys", true);
+}

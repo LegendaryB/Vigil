@@ -2,7 +2,7 @@ using Vigil.Domain.Events;
 
 namespace Vigil.Domain.Events.EventActions;
 
-internal record EventAction(
+public record EventAction(
     Guid Id,
     VigilEventType Event,
     EventActionTarget Target,

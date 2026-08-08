@@ -1,6 +1,6 @@
 namespace Vigil.Domain.Events;
 
-internal enum VigilEventType
+public enum VigilEventType
 {
     ClientCheckedIn,
     ClientCheckedOut,

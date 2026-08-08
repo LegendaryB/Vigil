@@ -1,0 +1,40 @@
+@inherits RazorSlice<EventAction>
+
+@{
+    var eventAction = Model;
+    var dialogId = DashboardDialogs.DetailsDialogId(eventAction.Id);
+    var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
+    var deleteConfirm = $"Delete the '{eventAction.Event}' event action{(eventAction.Name is null ? "" : $" '{eventAction.Name}'")}?";
+
+    string TargetType(EventActionTarget target) => target switch
+    {
+        WebhookTarget => "Webhook",
+        CommandTarget => "Command",
+        _ => "-"
+    };
+
+    string TargetValue(EventActionTarget target) => target switch
+    {
+        WebhookTarget webhookTarget => webhookTarget.Url,
+        CommandTarget commandTarget => commandTarget.Command,
+        _ => "-"
+    };
+}
+<tr id="event-action-@eventAction.Id">
+  <td>@eventAction.Event</td>
+  <td>@TargetType(eventAction.Target)</td>
+  <td>@TargetValue(eventAction.Target)</td>
+  <td>@(eventAction.Name ?? "-")</td>
+  <td>@eventAction.Priority</td>
+  <td>@eventAction.CreatedAt.ToString("u")</td>
+  <td>
+    <div class="@DashboardStyles.ActionsCell">
+      <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
+      @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(dialogId, "Event action details", eventAction, null)))
+      <button class="@DashboardStyles.IconButton" title="Delete" aria-label="Delete"
+              hx-post="@UiRoutes.EventActionDelete(eventAction.Id)"
+              hx-confirm="@deleteConfirm"
+              hx-target="closest tr" hx-swap="delete">@(new HtmlString(DashboardIcons.Trash))</button>
+    </div>
+  </td>
+</tr>

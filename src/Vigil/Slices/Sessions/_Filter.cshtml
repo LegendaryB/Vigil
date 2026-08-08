@@ -1,0 +1,12 @@
+@inherits RazorSlice<bool>
+
+@{
+    var showClosed = Model;
+    var tableBodyTarget = $"#{DashboardStyles.SessionsTableBodyId}";
+}
+<div class="@DashboardStyles.DashboardToolbar">
+  <label class="@DashboardStyles.FilterLabel">
+    <input type="checkbox" hx-get="@UiRoutes.SessionsTable" hx-target="@tableBodyTarget" hx-swap="outerHTML" hx-vals="js:{showClosed: event.target.checked}" checked="@showClosed" />
+    Show closed sessions (last @SessionsFilter.ClosedSessionRetention.Days days)
+  </label>
+</div>

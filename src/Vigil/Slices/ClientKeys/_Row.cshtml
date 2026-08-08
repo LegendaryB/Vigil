@@ -1,0 +1,31 @@
+@inherits RazorSlice<ClientKey>
+
+@{
+    var clientKey = Model;
+    var dialogId = DashboardDialogs.DetailsDialogId(clientKey.Id);
+    var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
+    var deleteConfirm = $"Delete the client key for '{clientKey.ClientName}'? This cannot be undone.";
+}
+<tr id="client-key-@clientKey.Id">
+  <td>@clientKey.ClientName</td>
+  <td><code>@clientKey.ApiKey</code></td>
+  <td>@clientKey.CreatedAt.ToString("u")</td>
+  <td>@(clientKey.LastUsedAt is { } lastUsedAt ? lastUsedAt.ToString("u") : "-")</td>
+  <td>
+    <div class="@DashboardStyles.ActionsCell">
+      <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
+      <dialog id="@dialogId">
+        @DashboardDialogs.BuildHeader("Client key details")
+        @DashboardDialogs.BuildReadOnlyField("Id", clientKey.Id.ToString())
+        @DashboardDialogs.BuildReadOnlyField("Client", clientKey.ClientName)
+        @DashboardDialogs.BuildReadOnlyField("API Key", clientKey.ApiKey)
+        @DashboardDialogs.BuildReadOnlyField("Created", clientKey.CreatedAt.ToString("u"))
+        @DashboardDialogs.BuildReadOnlyField("Last used", clientKey.LastUsedAt is { } lu ? lu.ToString("u") : "-")
+      </dialog>
+      <button class="@DashboardStyles.IconButton" title="Delete" aria-label="Delete"
+              hx-post="@UiRoutes.ClientKeyDelete(clientKey.Id)"
+              hx-confirm="@deleteConfirm"
+              hx-target="closest tr" hx-swap="delete">@(new HtmlString(DashboardIcons.Trash))</button>
+    </div>
+  </td>
+</tr>

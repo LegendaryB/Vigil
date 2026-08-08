@@ -1,0 +1,8 @@
+@inherits RazorSlice<EventActionsIndexModel>
+@implements IUsesLayout<_Layout, LayoutModel>
+
+@(await RenderPartialAsync<_Content, EventActionsIndexModel>(Model))
+
+@functions {
+    public LayoutModel LayoutModel => new("Event Actions", true);
+}

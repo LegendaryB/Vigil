@@ -13,7 +13,7 @@ internal class CreateEventActionFeature : IEndpoint
 
     public static string Tag => Tags.EventActions;
 
-    internal record Request
+    private record Request
     {
         public required VigilEventType Event { get; init; }
         public required EventActionTarget Target { get; init; }

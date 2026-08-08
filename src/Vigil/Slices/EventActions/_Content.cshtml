@@ -1,0 +1,25 @@
+@inherits RazorSlice<EventActionsIndexModel>
+
+@{
+    var openCreateDialogOnclick = $"vigilOpenDialog('{DashboardStyles.CreateEventActionDialogId}')";
+}
+<div id="@DashboardStyles.EventActionsPageId">
+  <div class="@DashboardStyles.DashboardToolbar">
+    <button type="button" onclick="@openCreateDialogOnclick">Create new event action</button>
+  </div>
+  @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(DashboardStyles.CreateEventActionDialogId, "New event action", null, Model.Error)))
+  <table>
+    <thead>
+      <tr>
+        <th>Event</th>
+        <th>Type</th>
+        <th>Target</th>
+        <th>Name</th>
+        <th>Priority</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    @(await RenderPartialAsync<_TableBody, IReadOnlyList<EventAction>>(Model.EventActions))
+  </table>
+</div>

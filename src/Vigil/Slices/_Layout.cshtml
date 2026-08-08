@@ -1,0 +1,61 @@
+@inherits RazorLayoutSlice<LayoutModel>
+
+@{
+    var bodyPaddingTop = Model.ShowNav ? "5rem" : "13px";
+    var bodyMaxWidth = Model.ShowNav ? "1200px" : "38em";
+    var bodyStyle = $"--body-padding-top:{bodyPaddingTop}; --body-max-width:{bodyMaxWidth}";
+}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>@Model.Title - Vigil</title>
+  <link rel="stylesheet" href="/sakura.css">
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="/htmx.min.js"></script>
+  <script>
+    function vigilOpenDialog(id) {
+      var dialog = document.getElementById(id);
+      dialog.showModal();
+      dialog.querySelectorAll('[required]').forEach(function (el) {
+        el.classList.add('@DashboardStyles.Touched');
+      });
+    }
+
+    document.addEventListener('htmx:afterSettle', function () {
+      var dialog = document.querySelector('dialog[@DashboardStyles.DataReopenAttribute]');
+      if (dialog) {
+        dialog.removeAttribute('@DashboardStyles.DataReopenAttribute');
+        vigilOpenDialog(dialog.id);
+      }
+    });
+  </script>
+</head>
+<body class="dashboard-body" style="@bodyStyle">
+  @if (Model.ShowNav)
+  {
+    <nav class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-vigil"><strong>Vigil</strong></div>
+        <div class="topbar-links">
+          <a href="@UiRoutes.Sessions">Sessions</a>
+          <a href="@UiRoutes.ClientKeys">Client Keys</a>
+          <a href="@UiRoutes.EventActions">Event Actions</a>
+        </div>
+        <div class="topbar-logout">
+          <form method="post" action="@UiRoutes.Logout" style="display:inline; margin:0">
+            <button type="submit" class="link-button">Logout</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+  }
+  @await RenderBodyAsync()
+  <footer class="dashboard-footer">
+    <span>&copy; 2026 LegendaryB. All rights reserved.</span>
+    <span> | </span>
+    <span><a href="https://github.com/LegendaryB/Vigil" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+  </footer>
+</body>
+</html>

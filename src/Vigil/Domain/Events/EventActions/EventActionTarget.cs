@@ -5,9 +5,9 @@ namespace Vigil.Domain.Events.EventActions;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(WebhookTarget), WebhookTarget.Discriminator)]
 [JsonDerivedType(typeof(CommandTarget), CommandTarget.Discriminator)]
-internal abstract record EventActionTarget;
+public abstract record EventActionTarget;
 
-internal sealed record WebhookTarget(
+public sealed record WebhookTarget(
     string Url,
     string? Secret = null,
     IReadOnlyDictionary<string, string>? Headers = null) : EventActionTarget
@@ -15,7 +15,7 @@ internal sealed record WebhookTarget(
     internal const string Discriminator = "webhook";
 }
 
-internal sealed record CommandTarget(
+public sealed record CommandTarget(
     string Command,
     IReadOnlyList<string> Arguments,
     IReadOnlyDictionary<string, string>? Environment = null) : EventActionTarget

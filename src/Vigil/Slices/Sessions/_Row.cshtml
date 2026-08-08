@@ -1,0 +1,43 @@
+@inherits RazorSlice<Session>
+@using System.Text.Json
+
+@{
+    var session = Model;
+    var isOpen = session.CheckedOutAt is null;
+    var dialogId = DashboardDialogs.DetailsDialogId(session.Id);
+    var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
+    var dotStyle = $"--dot-color:{(isOpen ? "#2e7d32" : "#bdbdbd")}";
+    var forceCloseConfirm = $"Force-close the session for '{session.ClientName}'?";
+    var metadataJson = session.Metadata is { Count: > 0 }
+        ? JsonSerializer.Serialize(session.Metadata, new JsonSerializerOptions { WriteIndented = true })
+        : string.Empty;
+}
+<tr id="session-@session.Id">
+  <td><span class="status-dot" title="@(isOpen ? "Open" : "Closed")" style="@dotStyle"></span></td>
+  <td>@session.ClientName</td>
+  <td>@session.CheckedInAt.ToString("u")</td>
+  <td>@(session.CheckedOutAt is { } checkedOutAt ? checkedOutAt.ToString("u") : "-")</td>
+  <td>@(session.LastSeenAt is { } lastSeenAt ? lastSeenAt.ToString("u") : "-")</td>
+  <td>
+    <div class="@DashboardStyles.ActionsCell">
+      <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
+      <dialog id="@dialogId">
+        @DashboardDialogs.BuildHeader("Session details")
+        @DashboardDialogs.BuildReadOnlyField("Id", session.Id.ToString())
+        @DashboardDialogs.BuildReadOnlyField("Client key Id", session.ClientKeyId.ToString())
+        @DashboardDialogs.BuildReadOnlyField("Client", session.ClientName)
+        @DashboardDialogs.BuildReadOnlyField("Checked in", session.CheckedInAt.ToString("u"))
+        @DashboardDialogs.BuildReadOnlyField("Checked out", session.CheckedOutAt is { } co ? co.ToString("u") : "-")
+        @DashboardDialogs.BuildReadOnlyField("Last seen", session.LastSeenAt is { } ls ? ls.ToString("u") : "-")
+        @DashboardDialogs.BuildReadOnlyTextArea("Metadata", metadataJson)
+      </dialog>
+      @if (isOpen)
+      {
+        <button class="@DashboardStyles.IconButton" title="Force close" aria-label="Force close"
+                hx-post="@UiRoutes.SessionClose(session.Id)"
+                hx-confirm="@forceCloseConfirm"
+                hx-target="closest tr" hx-swap="outerHTML">@(new HtmlString(DashboardIcons.Stop))</button>
+      }
+    </div>
+  </td>
+</tr>

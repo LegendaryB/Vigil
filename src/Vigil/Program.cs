@@ -1,6 +1,7 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Asp.Versioning;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 using Serilog;
@@ -67,11 +68,29 @@ public static class Program
             .AddOptions<VigilOptions>()
             .ValidateOnStart();
 
+        builder.Services
+            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath = UiRoutes.Login;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.ExpireTimeSpan = TimeSpan.FromHours(12);
+                options.SlidingExpiration = true;
+            });
+
+        builder.Services.AddAuthorization();
+
         var app = builder.Build();
 
         app.UseExceptionHandler();
 
         app.UseSerilogRequestLogging();
+
+        app.UseStaticFiles();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         if (app.Environment.IsDevelopment())
         {

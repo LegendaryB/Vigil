@@ -6,6 +6,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>true</InvariantGlobalization>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <!-- WebApplication.CreateSlimBuilder doesn't wire up the Static Web Assets
+             manifest, so wwwroot files aren't resolved at runtime unless they're
+             physically copied to the output directory instead. -->
+        <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,20 +18,25 @@
         <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" />
         <PackageReference Include="Ardalis.Result.FluentValidation" Version="10.1.0" />
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9"/>
-        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0"/>
-        <PackageReference Include="Microsoft.OpenApi" Version="2.11.0"/>
-        <PackageReference Include="Scalar.AspNetCore" Version="2.16.16"/>
-        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0"/>
-        <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.1"/>
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1"/>
-        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0" />
+        <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
+        <PackageReference Include="RazorSlices" Version="0.11.1" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.16.16" />
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.1" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
       <Content Include="..\..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

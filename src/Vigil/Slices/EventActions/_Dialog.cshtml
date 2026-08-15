@@ -32,7 +32,7 @@
         <select name="event" disabled="@(readOnly ? "disabled" : null)">
           @foreach (var eventType in Enum.GetValues<VigilEventType>())
           {
-            <option value="@eventType" selected="@(existing?.Event == eventType ? "selected" : null)">@eventType</option>
+            <option value="@eventType" selected="@(existing?.Event == eventType ? "selected" : null)" title="@eventType.ToDescription()">@eventType.ToDisplayName()</option>
           }
         </select>
       </label>

@@ -29,10 +29,10 @@
     <div class="@DashboardStyles.FormField">
       <label>
         Event
-        <select name="event" disabled="@readOnly">
+        <select name="event" disabled="@(readOnly ? "disabled" : null)">
           @foreach (var eventType in Enum.GetValues<VigilEventType>())
           {
-            <option value="@eventType" selected="@(existing?.Event == eventType)">@eventType</option>
+            <option value="@eventType" selected="@(existing?.Event == eventType ? "selected" : null)">@eventType</option>
           }
         </select>
       </label>
@@ -41,9 +41,9 @@
     <div class="@DashboardStyles.FormField">
       <label>
         Target type
-        <select name="targetType" disabled="@readOnly" onchange="@(readOnly ? null : toggleScript)">
-          <option value="webhook" selected="@(TargetTypeValue(existing?.Target) == "webhook")">Webhook</option>
-          <option value="command" selected="@(TargetTypeValue(existing?.Target) == "command")">Command</option>
+        <select name="targetType" disabled="@(readOnly ? "disabled" : null)" onchange="@(readOnly ? null : toggleScript)">
+          <option value="webhook" selected="@(TargetTypeValue(existing?.Target) == "webhook" ? "selected" : null)">Webhook</option>
+          <option value="command" selected="@(TargetTypeValue(existing?.Target) == "command" ? "selected" : null)">Command</option>
         </select>
       </label>
     </div>
@@ -57,19 +57,19 @@
             <input type="text" name="url" placeholder="Webhook URL" value="@webhook?.Url"
                    id="@(readOnly ? null : DashboardStyles.UrlInputId)"
                    onblur="@(readOnly ? null : $"this.classList.add('{DashboardStyles.Touched}')")"
-                   required="@(!readOnly)" readonly="@readOnly" />
+                   required="@(!readOnly ? "required" : null)" readonly="@(readOnly ? "readonly" : null)" />
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Secret
-            <input type="text" name="secret" placeholder="Secret" value="@webhook?.Secret" readonly="@readOnly" />
+            <input type="text" name="secret" placeholder="Secret" value="@webhook?.Secret" readonly="@(readOnly ? "readonly" : null)" />
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Headers, one per line as KEY=VALUE
-            <textarea name="headers" placeholder="Headers, one per line as KEY=VALUE" rows="3" readonly="@readOnly">@FormatDictionary(webhook?.Headers)</textarea>
+            <textarea name="headers" placeholder="Headers, one per line as KEY=VALUE" rows="3" readonly="@(readOnly ? "readonly" : null)">@FormatDictionary(webhook?.Headers)</textarea>
           </label>
         </div>
       </div>
@@ -81,22 +81,22 @@
         <div class="@DashboardStyles.FormField">
           <label>
             Command
-            <input type="text" name="command" placeholder="Command" value="@command?.Command"
-                   id="@(readOnly ? null : DashboardStyles.CommandInputId)"
-                   onblur="@(readOnly ? null : $"this.classList.add('{DashboardStyles.Touched}')")"
-                   readonly="@readOnly" />
+            <textarea name="command" placeholder="Command" rows="3"
+                      id="@(readOnly ? null : DashboardStyles.CommandInputId)"
+                      onblur="@(readOnly ? null : $"this.classList.add('{DashboardStyles.Touched}')")"
+                      readonly="@(readOnly ? "readonly" : null)">@command?.Command</textarea>
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Arguments, one per line
-            <textarea name="arguments" placeholder="Arguments, one per line" rows="3" readonly="@readOnly">@FormatList(command?.Arguments)</textarea>
+            <textarea name="arguments" placeholder="Arguments, one per line" rows="3" readonly="@(readOnly ? "readonly" : null)">@FormatList(command?.Arguments)</textarea>
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Environment variables, one per line as KEY=VALUE
-            <textarea name="environment" placeholder="Environment variables, one per line as KEY=VALUE" rows="3" readonly="@readOnly">@FormatDictionary(command?.Environment)</textarea>
+            <textarea name="environment" placeholder="Environment variables, one per line as KEY=VALUE" rows="3" readonly="@(readOnly ? "readonly" : null)">@FormatDictionary(command?.Environment)</textarea>
           </label>
         </div>
       </div>
@@ -105,19 +105,19 @@
     <div class="@DashboardStyles.FormField">
       <label>
         Name
-        <input type="text" name="name" placeholder="Name" value="@existing?.Name" readonly="@readOnly" />
+        <input type="text" name="name" placeholder="Name" value="@existing?.Name" readonly="@(readOnly ? "readonly" : null)" />
       </label>
     </div>
     <div class="@DashboardStyles.FormField">
       <label>
         Description
-        <input type="text" name="description" placeholder="Description" value="@existing?.Description" readonly="@readOnly" />
+        <input type="text" name="description" placeholder="Description" value="@existing?.Description" readonly="@(readOnly ? "readonly" : null)" />
       </label>
     </div>
     <div class="@DashboardStyles.FormField">
       <label>
         Priority
-        <input type="number" name="priority" value="@(existing?.Priority ?? 0)" readonly="@readOnly" />
+        <input type="number" name="priority" value="@(existing?.Priority ?? 0)" readonly="@(readOnly ? "readonly" : null)" />
       </label>
     </div>
 

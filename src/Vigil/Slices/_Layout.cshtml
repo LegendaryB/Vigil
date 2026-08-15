@@ -24,7 +24,7 @@
     }
 
     document.addEventListener('htmx:afterSettle', function () {
-      var dialog = document.querySelector('dialog[@DashboardStyles.DataReopenAttribute]');
+      var dialog = document.querySelector('dialog[@DashboardStyles.DataReopenAttribute="True"]');
       if (dialog) {
         dialog.removeAttribute('@DashboardStyles.DataReopenAttribute');
         vigilOpenDialog(dialog.id);

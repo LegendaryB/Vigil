@@ -6,7 +6,7 @@
 }
 <div class="@DashboardStyles.DashboardToolbar">
   <label class="@DashboardStyles.FilterLabel">
-    <input type="checkbox" hx-get="@UiRoutes.SessionsTable" hx-target="@tableBodyTarget" hx-swap="outerHTML" hx-vals="js:{showClosed: event.target.checked}" checked="@showClosed" />
+    <input type="checkbox" hx-get="@UiRoutes.SessionsTable" hx-target="@tableBodyTarget" hx-swap="outerHTML" hx-vals="js:{showClosed: event.target.checked}" checked="@(showClosed ? "checked" : null)" />
     Show closed sessions (last @SessionsFilter.ClosedSessionRetention.Days days)
   </label>
 </div>

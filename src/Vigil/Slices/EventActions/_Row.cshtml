@@ -4,7 +4,7 @@
     var eventAction = Model;
     var dialogId = DashboardDialogs.DetailsDialogId(eventAction.Id);
     var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
-    var deleteConfirm = $"Delete the '{eventAction.Event}' event action{(eventAction.Name is null ? "" : $" '{eventAction.Name}'")}?";
+    var deleteConfirm = $"Delete the '{eventAction.Event}' event action?";
 
     string TargetType(EventActionTarget target) => target switch
     {
@@ -24,7 +24,6 @@
   <td>@eventAction.Event</td>
   <td>@TargetType(eventAction.Target)</td>
   <td><code>@TargetValue(eventAction.Target)</code></td>
-  <td>@(eventAction.Name ?? "-")</td>
   <td>@eventAction.Priority</td>
   <td>@eventAction.CreatedAt.ToString("u")</td>
   <td>

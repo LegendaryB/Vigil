@@ -17,8 +17,6 @@ internal class CreateEventActionFeature : IEndpoint
     {
         public required VigilEventType Event { get; init; }
         public required EventActionTarget Target { get; init; }
-        public string? Name { get; init; }
-        public string? Description { get; init; }
         public int Priority { get; init; }
     }
 
@@ -27,8 +25,6 @@ internal class CreateEventActionFeature : IEndpoint
         public required Guid Id { get; init; }
         public required VigilEventType Event { get; init; }
         public required EventActionTarget Target { get; init; }
-        public string? Name { get; init; }
-        public string? Description { get; init; }
         public required int Priority { get; init; }
         public required DateTime CreatedAt { get; init; }
     }
@@ -46,8 +42,6 @@ internal class CreateEventActionFeature : IEndpoint
                 var createResult = await repository.CreateAsync(
                     req.Event,
                     req.Target,
-                    req.Name,
-                    req.Description,
                     req.Priority,
                     cancellationToken);
 
@@ -67,8 +61,6 @@ internal class CreateEventActionFeature : IEndpoint
                     Id = eventAction.Id,
                     Event = eventAction.Event,
                     Target = eventAction.Target,
-                    Name = eventAction.Name,
-                    Description = eventAction.Description,
                     Priority = eventAction.Priority,
                     CreatedAt = eventAction.CreatedAt
                 });

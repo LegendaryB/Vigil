@@ -17,15 +17,13 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
             {
                 var form = await httpContext.Request.ReadFormAsync(cancellationToken);
 
-                var error = TryBuildEventAction(form, out var eventType, out var target, out var name, out var description, out var priority);
+                var error = TryBuildEventAction(form, out var eventType, out var target, out var priority);
 
                 if (error is null)
                 {
                     var createResult = await repository.CreateAsync(
                         eventType,
                         target!,
-                        name,
-                        description,
                         priority,
                         cancellationToken);
 
@@ -45,13 +43,9 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
         IFormCollection form,
         out VigilEventType eventType,
         out EventActionTarget? target,
-        out string? name,
-        out string? description,
         out int priority)
     {
         target = null;
-        name = NullIfEmpty(form["name"].ToString());
-        description = NullIfEmpty(form["description"].ToString());
 
         if (!int.TryParse(form["priority"].ToString(), out priority))
             priority = 0;

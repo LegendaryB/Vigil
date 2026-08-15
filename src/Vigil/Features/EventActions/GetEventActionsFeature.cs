@@ -17,8 +17,6 @@ internal class GetEventActionsFeature : IEndpoint
         public required Guid Id { get; init; }
         public required VigilEventType Event { get; init; }
         public required EventActionTarget Target { get; init; }
-        public string? Name { get; init; }
-        public string? Description { get; init; }
         public required int Priority { get; init; }
         public required DateTime CreatedAt { get; init; }
     }
@@ -36,8 +34,6 @@ internal class GetEventActionsFeature : IEndpoint
                     Id = a.Id,
                     Event = a.Event,
                     Target = a.Target,
-                    Name = a.Name,
-                    Description = a.Description,
                     Priority = a.Priority,
                     CreatedAt = a.CreatedAt
                 }).ToList();

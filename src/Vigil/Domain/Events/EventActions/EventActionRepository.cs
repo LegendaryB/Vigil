@@ -22,8 +22,6 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
     public async Task<Result<EventAction>> CreateAsync(
         VigilEventType @event,
         EventActionTarget target,
-        string? name,
-        string? description,
         int priority,
         CancellationToken cancellationToken)
     {
@@ -33,8 +31,6 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
                 Guid.NewGuid(),
                 @event,
                 target,
-                name,
-                description,
                 priority,
                 DateTime.UtcNow
             );

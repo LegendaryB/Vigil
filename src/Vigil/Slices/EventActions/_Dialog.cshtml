@@ -104,18 +104,6 @@
 
     <div class="@DashboardStyles.FormField">
       <label>
-        Name
-        <input type="text" name="name" placeholder="Name" value="@existing?.Name" readonly="@(readOnly ? "readonly" : null)" />
-      </label>
-    </div>
-    <div class="@DashboardStyles.FormField">
-      <label>
-        Description
-        <input type="text" name="description" placeholder="Description" value="@existing?.Description" readonly="@(readOnly ? "readonly" : null)" />
-      </label>
-    </div>
-    <div class="@DashboardStyles.FormField">
-      <label>
         Priority
         <input type="number" name="priority" value="@(existing?.Priority ?? 0)" readonly="@(readOnly ? "readonly" : null)" />
       </label>

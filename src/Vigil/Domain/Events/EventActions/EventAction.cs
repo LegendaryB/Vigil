@@ -6,7 +6,5 @@ public record EventAction(
     Guid Id,
     VigilEventType Event,
     EventActionTarget Target,
-    string? Name,
-    string? Description,
     int Priority,
     DateTime CreatedAt);

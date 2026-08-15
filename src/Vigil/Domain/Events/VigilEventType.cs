@@ -17,6 +17,15 @@ public enum VigilEventType
     /// <summary>An open session was closed by an administrator rather than by the client itself.</summary>
     ClientForceCheckedOut,
 
-    /// <summary>Every member of a client group has checked out, or the group's completion timeout elapsed.</summary>
-    GroupCheckedOut
+    /// <summary>Every member of a client group has checked out.</summary>
+    GroupCheckedOut,
+
+    /// <summary>A client group's completion timeout elapsed before every member checked out.</summary>
+    GroupCompletionTimedOut
+}
+
+internal static class VigilEventTypeExtensions
+{
+    internal static bool IsGroupScoped(this VigilEventType eventType) =>
+        eventType is VigilEventType.GroupCheckedOut or VigilEventType.GroupCompletionTimedOut;
 }

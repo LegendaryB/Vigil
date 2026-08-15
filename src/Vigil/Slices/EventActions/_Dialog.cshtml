@@ -9,7 +9,7 @@
     var hasError = !readOnly && !string.IsNullOrEmpty(error);
 
     var eventToggleScript =
-        $"var isGroup = this.value === '{VigilEventType.GroupCheckedOut}';" +
+        $"var isGroup = this.value === '{VigilEventType.GroupCheckedOut}' || this.value === '{VigilEventType.GroupCompletionTimedOut}';" +
         $"document.getElementById('{DashboardStyles.GroupFieldId}').style.display = isGroup ? '' : 'none';" +
         $"document.getElementById('{DashboardStyles.GroupInputId}').required = isGroup;" +
         "var form = this.closest('form');" +
@@ -52,7 +52,7 @@
 
     @if (!readOnly)
     {
-      <div class="@DashboardStyles.FormField" id="@DashboardStyles.GroupFieldId" style="@(existing?.Event == VigilEventType.GroupCheckedOut ? null : "display:none")">
+      <div class="@DashboardStyles.FormField" id="@DashboardStyles.GroupFieldId" style="@(existing is not null && existing.Event.IsGroupScoped() ? null : "display:none")">
         <label>
           Group
           <select name="group" id="@DashboardStyles.GroupInputId">
@@ -65,7 +65,7 @@
         </label>
       </div>
     }
-    else if (existing?.Event == VigilEventType.GroupCheckedOut)
+    else if (existing is not null && existing.Event.IsGroupScoped())
     {
       @DashboardDialogs.BuildReadOnlyField("Group", existing.Group ?? "")
     }

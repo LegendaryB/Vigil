@@ -34,10 +34,10 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
                 return ErrorCatalog.EventAction.InvalidPriority();
             }
 
-            if (@event == VigilEventType.GroupCheckedOut && string.IsNullOrWhiteSpace(group))
+            if (@event.IsGroupScoped() && string.IsNullOrWhiteSpace(group))
                 return ErrorCatalog.EventAction.GroupRequired();
 
-            if (@event != VigilEventType.GroupCheckedOut && !string.IsNullOrWhiteSpace(group))
+            if (!@event.IsGroupScoped() && !string.IsNullOrWhiteSpace(group))
                 return ErrorCatalog.EventAction.GroupNotAllowed();
 
             var eventAction = new EventAction(

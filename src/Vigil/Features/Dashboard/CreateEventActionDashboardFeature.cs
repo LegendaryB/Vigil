@@ -101,7 +101,7 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
             return "Invalid event type.";
         }
 
-        if (eventType == VigilEventType.GroupCheckedOut)
+        if (eventType.IsGroupScoped())
         {
             group = NullIfEmpty(form["group"].ToString());
 

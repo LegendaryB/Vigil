@@ -8,6 +8,7 @@
 }
 <tr id="client-key-@clientKey.Id">
   <td>@clientKey.ClientName</td>
+  <td>@(clientKey.Group ?? "-")</td>
   <td><code>@clientKey.ApiKey</code></td>
   <td>@clientKey.CreatedAt.ToString("u")</td>
   <td>@(clientKey.LastUsedAt is { } lastUsedAt ? lastUsedAt.ToString("u") : "-")</td>
@@ -18,6 +19,7 @@
         @DashboardDialogs.BuildHeader("Client key details")
         @DashboardDialogs.BuildReadOnlyField("Id", clientKey.Id.ToString())
         @DashboardDialogs.BuildReadOnlyField("Client", clientKey.ClientName)
+        @DashboardDialogs.BuildReadOnlyField("Group", clientKey.Group ?? "-")
         @DashboardDialogs.BuildReadOnlyField("API Key", clientKey.ApiKey)
         @DashboardDialogs.BuildReadOnlyField("Created", clientKey.CreatedAt.ToString("u"))
         @DashboardDialogs.BuildReadOnlyField("Last used", clientKey.LastUsedAt is { } lu ? lu.ToString("u") : "-")

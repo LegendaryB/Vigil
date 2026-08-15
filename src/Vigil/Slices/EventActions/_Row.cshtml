@@ -24,12 +24,13 @@
   <td>@eventAction.Event.ToDisplayName()</td>
   <td>@TargetType(eventAction.Target)</td>
   <td><code>@TargetValue(eventAction.Target)</code></td>
+  <td>@(eventAction.Group ?? "-")</td>
   <td>@eventAction.Priority</td>
   <td>@eventAction.CreatedAt.ToString("u")</td>
   <td>
     <div class="@DashboardStyles.ActionsCell">
       <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
-      @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(dialogId, "Event action details", eventAction, null)))
+      @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(dialogId, "Event action details", eventAction, null, [])))
       <button class="@DashboardStyles.IconButton" title="Delete" aria-label="Delete"
               hx-post="@UiRoutes.EventActionDelete(eventAction.Id)"
               hx-confirm="@deleteConfirm"

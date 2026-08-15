@@ -16,6 +16,8 @@ internal class CreateClientKeyDashboardFeature : IUiEndpoint
             {
                 var form = await httpContext.Request.ReadFormAsync(cancellationToken);
                 var clientName = form["clientName"].ToString();
+                var group = form["group"].ToString();
+                group = string.IsNullOrWhiteSpace(group) ? null : group.Trim();
 
                 string? error = null;
 
@@ -25,7 +27,7 @@ internal class CreateClientKeyDashboardFeature : IUiEndpoint
                 }
                 else
                 {
-                    var createResult = await repository.CreateKeyAsync(clientName, cancellationToken);
+                    var createResult = await repository.CreateKeyAsync(clientName, group, cancellationToken);
 
                     if (!createResult.IsSuccess)
                         error = createResult.ValidationErrors.FirstOrDefault()?.ErrorMessage ?? "Could not create client key.";

@@ -2,19 +2,21 @@
 @implements IUsesLayout<_Layout, LayoutModel>
 
 @(await RenderPartialAsync<_Filter, bool>(Model.ShowClosed))
-<table>
-  <thead>
-    <tr>
-      <th></th>
-      <th>Client</th>
-      <th>Checked in</th>
-      <th>Checked out</th>
-      <th>Last seen</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  @(await RenderPartialAsync<_TableBody, IReadOnlyList<Session>>(Model.Sessions))
-</table>
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Client</th>
+        <th>Checked in</th>
+        <th>Checked out</th>
+        <th>Last seen</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    @(await RenderPartialAsync<_TableBody, IReadOnlyList<Session>>(Model.Sessions))
+  </table>
+</div>
 
 @functions {
     public LayoutModel LayoutModel => new("Sessions", true);

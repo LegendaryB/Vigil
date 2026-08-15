@@ -18,6 +18,7 @@ internal class CreateEventActionFeature : IEndpoint
         public required VigilEventType Event { get; init; }
         public required EventActionTarget Target { get; init; }
         public int Priority { get; init; }
+        public string? Group { get; init; }
     }
 
     private record Response
@@ -27,6 +28,7 @@ internal class CreateEventActionFeature : IEndpoint
         public required EventActionTarget Target { get; init; }
         public required int Priority { get; init; }
         public required DateTime CreatedAt { get; init; }
+        public string? Group { get; init; }
     }
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -43,6 +45,7 @@ internal class CreateEventActionFeature : IEndpoint
                     req.Event,
                     req.Target,
                     req.Priority,
+                    req.Group,
                     cancellationToken);
 
                 if (createResult.IsSuccess)
@@ -62,7 +65,8 @@ internal class CreateEventActionFeature : IEndpoint
                     Event = eventAction.Event,
                     Target = eventAction.Target,
                     Priority = eventAction.Priority,
-                    CreatedAt = eventAction.CreatedAt
+                    CreatedAt = eventAction.CreatedAt,
+                    Group = eventAction.Group
                 });
 
                 return responseResult.ToProblemDetails();

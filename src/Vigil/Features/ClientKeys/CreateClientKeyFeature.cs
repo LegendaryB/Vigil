@@ -13,14 +13,15 @@ internal class CreateClientKeyFeature : IEndpoint
 
     public static string Tag => Tags.ClientKeys;
 
-    internal record Request(string ClientName);
+    internal record Request(string ClientName, string? Group = null);
 
     private record Response(
         Guid Id,
         string ClientName,
         string ApiKey,
         DateTime CreatedAt,
-        DateTime? LastUsedAt
+        DateTime? LastUsedAt,
+        string? Group
     );
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -48,6 +49,7 @@ internal class CreateClientKeyFeature : IEndpoint
                 
                 var createKeyResult = await repository.CreateKeyAsync(
                     req.ClientName,
+                    req.Group,
                     cancellationToken);
 
                 if (createKeyResult.IsSuccess)
@@ -66,7 +68,8 @@ internal class CreateClientKeyFeature : IEndpoint
                     key.ClientName,
                     key.ApiKey,
                     key.CreatedAt,
-                    key.LastUsedAt
+                    key.LastUsedAt,
+                    key.Group
                 ));
 
                 return responseResult.ToProblemDetails();

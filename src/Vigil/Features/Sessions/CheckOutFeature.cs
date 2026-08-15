@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Vigil.Domain.ClientKeys;
 using Vigil.Domain.Events;
 using Vigil.Domain.Events.EventActions;
+using Vigil.Domain.Events.Groups;
 using Vigil.Domain.Sessions;
 using Vigil.Endpoints;
 using Vigil.Endpoints.Security;
@@ -32,6 +33,7 @@ internal class CheckOutFeature : IEndpoint
                 [FromServices] SessionRepository repository,
                 [FromServices] ClientKeyRepository clientKeyRepository,
                 [FromServices] EventActionQueue eventQueue,
+                [FromServices] GroupCompletionTracker groupTracker,
                 [FromServices] ILogger<CheckOutFeature> logger,
                 CancellationToken cancellationToken) =>
             {
@@ -67,6 +69,19 @@ internal class CheckOutFeature : IEndpoint
                             null,
                             null,
                             DateTime.UtcNow));
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(client.Group) &&
+                        groupTracker.RecordCheckOut(client.Group, client.Id))
+                    {
+                        eventQueue.Enqueue(new EventPayload(
+                            VigilEventType.GroupCheckedOut,
+                            null,
+                            null,
+                            null,
+                            DateTime.UtcNow,
+                            Metadata: null,
+                            GroupName: client.Group));
                     }
                 }
                 else

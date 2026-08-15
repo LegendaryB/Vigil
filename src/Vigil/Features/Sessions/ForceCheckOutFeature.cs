@@ -1,7 +1,9 @@
 using Ardalis.Result;
 using Microsoft.AspNetCore.Mvc;
+using Vigil.Domain.ClientKeys;
 using Vigil.Domain.Events;
 using Vigil.Domain.Events.EventActions;
+using Vigil.Domain.Events.Groups;
 using Vigil.Domain.Sessions;
 using Vigil.Endpoints;
 using Vigil.Endpoints.Security;
@@ -29,7 +31,9 @@ internal class ForceCheckOutFeature : IEndpoint
         app.MapPost(RoutePrefix + "/{id:guid}/close", async (
                 [FromRoute] Guid id,
                 [FromServices] SessionRepository repository,
+                [FromServices] ClientKeyRepository clientKeyRepository,
                 [FromServices] EventActionQueue eventQueue,
+                [FromServices] GroupCompletionTracker groupTracker,
                 [FromServices] ILogger<ForceCheckOutFeature> logger,
                 CancellationToken cancellationToken) =>
             {
@@ -61,6 +65,23 @@ internal class ForceCheckOutFeature : IEndpoint
                             null,
                             null,
                             DateTime.UtcNow));
+                    }
+
+                    var client = clientKeyRepository.Get()
+                        .FirstOrDefault(k => k.Id == forceCheckOutResult.Value.ClientKeyId);
+
+                    if (client is not null &&
+                        !string.IsNullOrWhiteSpace(client.Group) &&
+                        groupTracker.RecordCheckOut(client.Group, client.Id))
+                    {
+                        eventQueue.Enqueue(new EventPayload(
+                            VigilEventType.GroupCheckedOut,
+                            null,
+                            null,
+                            null,
+                            DateTime.UtcNow,
+                            Metadata: null,
+                            GroupName: client.Group));
                     }
                 }
                 else

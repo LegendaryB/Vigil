@@ -12,6 +12,6 @@ public record SessionsIndexModel(IReadOnlyList<Session> Sessions, bool ShowClose
 
 public record ClientKeysIndexModel(IReadOnlyList<ClientKey> ClientKeys, string? Error);
 
-public record EventActionsIndexModel(IReadOnlyList<EventAction> EventActions, string? Error);
+public record EventActionsIndexModel(IReadOnlyList<EventAction> EventActions, string? Error, IReadOnlyList<string> KnownGroups);
 
-public record EventActionDialogModel(string DialogId, string Heading, EventAction? Existing, string? Error);
+public record EventActionDialogModel(string DialogId, string Heading, EventAction? Existing, string? Error, IReadOnlyList<string> KnownGroups);

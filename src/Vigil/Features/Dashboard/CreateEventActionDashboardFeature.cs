@@ -1,3 +1,4 @@
+using Vigil.Domain.ClientKeys;
 using Vigil.Domain.Events;
 using Vigil.Domain.Events.EventActions;
 using Vigil.Endpoints;
@@ -13,11 +14,12 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
         app.MapPost(UiRoutes.EventActions, async (
                 HttpContext httpContext,
                 EventActionRepository repository,
+                ClientKeyRepository clientKeyRepository,
                 CancellationToken cancellationToken) =>
             {
                 var form = await httpContext.Request.ReadFormAsync(cancellationToken);
 
-                var error = TryBuildEventAction(form, out var eventType, out var target, out var priority);
+                var error = TryBuildEventAction(form, out var eventType, out var target, out var priority, out var group);
 
                 if (error is null)
                 {
@@ -25,13 +27,22 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
                         eventType,
                         target!,
                         priority,
+                        group,
                         cancellationToken);
 
                     if (!createResult.IsSuccess)
                         error = createResult.ValidationErrors.FirstOrDefault()?.ErrorMessage ?? "Could not create event action.";
                 }
 
-                var model = new EventActionsIndexModel(repository.Get().ToList(), error);
+                var knownGroups = clientKeyRepository.Get()
+                    .Select(k => k.Group)
+                    .Where(g => !string.IsNullOrWhiteSpace(g))
+                    .Select(g => g!)
+                    .Distinct()
+                    .OrderBy(g => g)
+                    .ToList();
+
+                var model = new EventActionsIndexModel(repository.Get().ToList(), error, knownGroups);
 
                 return Results.RazorSlice<_Content, EventActionsIndexModel>(model);
             })
@@ -43,7 +54,8 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
         IFormCollection form,
         out VigilEventType eventType,
         out EventActionTarget? target,
-        out int priority)
+        out int priority,
+        out string? group)
     {
         target = null;
 
@@ -51,7 +63,22 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
             priority = 1;
 
         if (!Enum.TryParse(form["event"].ToString(), out eventType))
+        {
+            group = null;
             return "Invalid event type.";
+        }
+
+        if (eventType == VigilEventType.GroupCheckedOut)
+        {
+            group = NullIfEmpty(form["group"].ToString());
+
+            if (group is null)
+                return "Group is required for this event type.";
+        }
+        else
+        {
+            group = null;
+        }
 
         var targetType = form["targetType"].ToString();
 

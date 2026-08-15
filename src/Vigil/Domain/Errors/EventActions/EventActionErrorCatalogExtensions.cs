@@ -27,5 +27,27 @@ internal static class EventActionErrorCatalogExtensions
                 Severity = ValidationSeverity.Error
             });
         }
+
+        internal Result GroupRequired()
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = "group",
+                ErrorMessage = EventActionErrorCatalog.GroupRequiredMessage,
+                ErrorCode = catalog.GroupRequired,
+                Severity = ValidationSeverity.Error
+            });
+        }
+
+        internal Result GroupNotAllowed()
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = "group",
+                ErrorMessage = EventActionErrorCatalog.GroupNotAllowedMessage,
+                ErrorCode = catalog.GroupNotAllowed,
+                Severity = ValidationSeverity.Error
+            });
+        }
     }
 }

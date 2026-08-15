@@ -17,6 +17,7 @@ internal sealed class EventActionDispatchService(
         {
             var orderedActions = eventActionRepository.Get()
                 .Where(a => a.Event == payload.Event)
+                .Where(a => a.Event != VigilEventType.GroupCheckedOut || a.Group == payload.GroupName)
                 .OrderBy(a => a.Priority);
 
             foreach (var action in orderedActions)
@@ -48,7 +49,8 @@ internal sealed class EventActionDispatchService(
                 clientKeyId = payload.ClientKeyId,
                 sessionId = payload.SessionId,
                 occurredAt = payload.OccurredAt,
-                metadata = payload.Metadata
+                metadata = payload.Metadata,
+                group = payload.GroupName
             });
 
             using var request = new HttpRequestMessage(HttpMethod.Post, webhook.Url);
@@ -123,6 +125,7 @@ internal sealed class EventActionDispatchService(
             startInfo.Environment["VIGIL_CLIENT_KEY_ID"] = payload.ClientKeyId?.ToString() ?? string.Empty;
             startInfo.Environment["VIGIL_SESSION_ID"] = payload.SessionId?.ToString() ?? string.Empty;
             startInfo.Environment["VIGIL_OCCURRED_AT"] = payload.OccurredAt.ToString("O");
+            startInfo.Environment["VIGIL_GROUP"] = payload.GroupName ?? string.Empty;
 
             if (payload.Metadata is not null)
             {

@@ -19,6 +19,7 @@ internal class GetEventActionsFeature : IEndpoint
         public required EventActionTarget Target { get; init; }
         public required int Priority { get; init; }
         public required DateTime CreatedAt { get; init; }
+        public string? Group { get; init; }
     }
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -35,7 +36,8 @@ internal class GetEventActionsFeature : IEndpoint
                     Event = a.Event,
                     Target = a.Target,
                     Priority = a.Priority,
-                    CreatedAt = a.CreatedAt
+                    CreatedAt = a.CreatedAt,
+                    Group = a.Group
                 }).ToList();
 
                 logger.LogGetEventActionsSuccess(response.Count);

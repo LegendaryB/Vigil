@@ -5,4 +5,6 @@ internal sealed class EventActionsOptions
     internal const string ConfigurationKey = "EventActions";
     
     public TimeSpan? CheckInTimeout { get; set; }
+
+    public TimeSpan? GroupCompletionTimeout { get; set; }
 }

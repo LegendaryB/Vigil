@@ -16,5 +16,16 @@ internal static class EventActionErrorCatalogExtensions
                 Severity = ValidationSeverity.Error
             });
         }
+
+        internal Result InvalidPriority()
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = "priority",
+                ErrorMessage = EventActionErrorCatalog.InvalidPriorityMessage,
+                ErrorCode = catalog.InvalidPriority,
+                Severity = ValidationSeverity.Error
+            });
+        }
     }
 }

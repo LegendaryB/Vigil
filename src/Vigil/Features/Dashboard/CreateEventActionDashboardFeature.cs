@@ -48,7 +48,7 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
         target = null;
 
         if (!int.TryParse(form["priority"].ToString(), out priority))
-            priority = 0;
+            priority = 1;
 
         if (!Enum.TryParse(form["event"].ToString(), out eventType))
             return "Invalid event type.";

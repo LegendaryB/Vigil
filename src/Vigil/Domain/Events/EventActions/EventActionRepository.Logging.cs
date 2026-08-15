@@ -14,6 +14,13 @@ internal static partial class EventActionRepositoryLogging
 
     [LoggerMessage(
         Level = LogLevel.Warning,
+        Message = "Failed to create event action: priority '{Priority}' is invalid.")]
+    internal static partial void LogEventActionInvalidPriority(
+        this ILogger logger,
+        int priority);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
         Message = "Failed to delete event action: '{EventActionId}' not found.")]
     internal static partial void LogEventActionNotFoundForDeletion(
         this ILogger logger,

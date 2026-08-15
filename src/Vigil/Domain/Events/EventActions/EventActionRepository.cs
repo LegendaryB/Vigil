@@ -27,6 +27,12 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
     {
         var result = await MutateAsync(() =>
         {
+            if (priority < 1)
+            {
+                Logger.LogEventActionInvalidPriority(priority);
+                return ErrorCatalog.EventAction.InvalidPriority();
+            }
+
             var eventAction = new EventAction(
                 Guid.NewGuid(),
                 @event,
@@ -39,6 +45,9 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
 
             return Result.Success(eventAction);
         }, cancellationToken);
+
+        if (!result.IsSuccess)
+            return result;
 
         Logger.LogEventActionCreated(result.Value.Id, result.Value.Event);
 

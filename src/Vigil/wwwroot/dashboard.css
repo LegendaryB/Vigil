@@ -55,6 +55,7 @@ th:first-child, td:first-child { width: 1%; text-align: left; white-space: nowra
 .dashboard-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
 .toolbar-title { margin: 0; font-size: 1.2em; }
 .dashboard-toolbar > .toolbar-actions { display: flex; align-items: center; gap: 1rem; }
+.button-with-icon { display: inline-flex; align-items: center; gap: 0.4rem; }
 
 .th-with-filter { display: inline-flex; align-items: center; gap: 0.35rem; }
 

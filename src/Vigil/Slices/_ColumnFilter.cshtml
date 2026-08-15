@@ -2,6 +2,7 @@
 
 @{
     var allChecked = Model.Options.All(o => o.Checked);
+    var noneChecked = Model.Options.Count > 0 && Model.Options.All(o => !o.Checked);
     var toggleOnclick = $"vigilToggleFilterPopover('{Model.PopoverId}', event)";
 }
 <button type="button" class="@DashboardStyles.ThFilterTrigger" onclick="@toggleOnclick" aria-label="Filter" title="Filter">@(new HtmlString(DashboardIcons.Filter))</button>
@@ -19,6 +20,7 @@
         @option.Text
       </label>
     }
+    <input type="checkbox" name="@Model.QueryParamName" value="@DashboardStyles.FilterNoneMarkerValue" checked="@(noneChecked ? "checked" : null)" data-none-marker hidden />
   </div>
   <div class="@DashboardStyles.FilterPopoverActions">
     <button type="button"

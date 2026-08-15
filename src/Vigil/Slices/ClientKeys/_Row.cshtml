@@ -8,10 +8,10 @@
 }
 <tr id="client-key-@clientKey.Id">
   <td>@clientKey.ClientName</td>
-  <td>@(clientKey.Group ?? "-")</td>
+  <td>@clientKey.Group</td>
   <td><code>@clientKey.ApiKey</code></td>
   <td>@clientKey.CreatedAt.ToString("u")</td>
-  <td>@(clientKey.LastUsedAt is { } lastUsedAt ? lastUsedAt.ToString("u") : "-")</td>
+  <td>@(clientKey.LastUsedAt is { } lastUsedAt ? lastUsedAt.ToString("u") : "")</td>
   <td>
     <div class="@DashboardStyles.ActionsCell">
       <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
@@ -19,10 +19,10 @@
         @DashboardDialogs.BuildHeader("Client key details")
         @DashboardDialogs.BuildReadOnlyField("Id", clientKey.Id.ToString())
         @DashboardDialogs.BuildReadOnlyField("Client", clientKey.ClientName)
-        @DashboardDialogs.BuildReadOnlyField("Group", clientKey.Group ?? "-")
+        @DashboardDialogs.BuildReadOnlyField("Group", clientKey.Group ?? "")
         @DashboardDialogs.BuildReadOnlyField("API Key", clientKey.ApiKey)
         @DashboardDialogs.BuildReadOnlyField("Created", clientKey.CreatedAt.ToString("u"))
-        @DashboardDialogs.BuildReadOnlyField("Last used", clientKey.LastUsedAt is { } lu ? lu.ToString("u") : "-")
+        @DashboardDialogs.BuildReadOnlyField("Last used", clientKey.LastUsedAt is { } lu ? lu.ToString("u") : "")
       </dialog>
       <button class="@DashboardStyles.IconButton" title="Delete" aria-label="Delete"
               hx-post="@UiRoutes.ClientKeyDelete(clientKey.Id)"

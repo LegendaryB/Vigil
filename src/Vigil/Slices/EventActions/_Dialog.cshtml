@@ -67,7 +67,7 @@
     }
     else if (existing?.Event == VigilEventType.GroupCheckedOut)
     {
-      @DashboardDialogs.BuildReadOnlyField("Group", existing.Group ?? "-")
+      @DashboardDialogs.BuildReadOnlyField("Group", existing.Group ?? "")
     }
 
     <div class="@DashboardStyles.FormField">

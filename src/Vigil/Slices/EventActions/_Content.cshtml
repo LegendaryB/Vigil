@@ -7,7 +7,8 @@
   <div class="@DashboardStyles.DashboardToolbar">
     <h2 class="@DashboardStyles.ToolbarTitle">Event Actions</h2>
     <div class="@DashboardStyles.ToolbarActions">
-      <button type="button" onclick="@openCreateDialogOnclick">Create new event action</button>
+      <button type="button" class="@DashboardStyles.ButtonWithIcon" onclick="window.location.href='@UiRoutes.EventActions'">@(new HtmlString(DashboardIcons.Reset)) Reset filters</button>
+      <button type="button" class="@DashboardStyles.ButtonWithIcon" onclick="@openCreateDialogOnclick">@(new HtmlString(DashboardIcons.Plus)) Create</button>
     </div>
   </div>
   @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(DashboardStyles.CreateEventActionDialogId, "New event action", null, Model.Error, Model.KnownGroups)))
@@ -28,7 +29,12 @@
             </span>
           </th>
           <th>Target</th>
-          <th>Group</th>
+          <th>
+            <span class="@DashboardStyles.ThWithFilter">
+              Group
+              @(await RenderPartialAsync<_ColumnFilter, ColumnFilterModel>(Model.GroupFilter))
+            </span>
+          </th>
           <th>Priority</th>
           <th>Created</th>
           <th>Actions</th>

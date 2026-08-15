@@ -9,9 +9,22 @@ internal class ClientKeysDashboardFeature : IUiEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet(UiRoutes.ClientKeys, (ClientKeyRepository repository) =>
+        app.MapGet(UiRoutes.ClientKeys, (ClientKeyRepository repository, string[]? group = null) =>
             {
-                var model = new ClientKeysIndexModel(repository.Get().ToList(), Error: null);
+                var allClientKeys = repository.Get();
+                var clientKeys = ClientKeysFilter.Apply(allClientKeys, group).ToList();
+
+                var groupFilter = GroupColumnFilterBuilder.Build(
+                    allClientKeys.Select(k => k.Group),
+                    "group-filter-popover",
+                    "group-filter-list",
+                    "group",
+                    UiRoutes.ClientKeysTable,
+                    $"#{DashboardStyles.ClientKeysTableBodyId}",
+                    group,
+                    ClientKeysFilter.Ungrouped);
+
+                var model = new ClientKeysIndexModel(clientKeys, Error: null, groupFilter);
 
                 return Results.RazorSlice<ClientKeysIndex, ClientKeysIndexModel>(model);
             })

@@ -76,11 +76,32 @@
       });
     }
 
+    function vigilFilterOptionBoxes(listId) {
+      return document.querySelectorAll('#' + listId + ' input[type=checkbox]:not([data-none-marker])');
+    }
+
+    function vigilSyncFilterNoneMarker(listId) {
+      var marker = document.querySelector('#' + listId + ' input[data-none-marker]');
+      if (!marker) return;
+
+      var anyChecked = Array.prototype.some.call(vigilFilterOptionBoxes(listId), function (cb) { return cb.checked; });
+      marker.checked = !anyChecked;
+    }
+
     function vigilFilterSelectAll(checkbox, listId) {
-      document.querySelectorAll('#' + listId + ' input[type=checkbox]').forEach(function (cb) {
+      vigilFilterOptionBoxes(listId).forEach(function (cb) {
         cb.checked = checkbox.checked;
       });
+      vigilSyncFilterNoneMarker(listId);
     }
+
+    document.addEventListener('change', function (event) {
+      if (event.target.tagName !== 'INPUT' || event.target.type !== 'checkbox' || event.target.hasAttribute('data-none-marker'))
+        return;
+
+      var list = event.target.closest('.@DashboardStyles.FilterPopoverList');
+      if (list) vigilSyncFilterNoneMarker(list.id);
+    });
   </script>
 </head>
 <body class="dashboard-body" style="@bodyStyle">

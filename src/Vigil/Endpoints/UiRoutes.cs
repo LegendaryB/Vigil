@@ -12,6 +12,7 @@ internal static class UiRoutes
     internal const string SessionCloseTemplate = $"{Sessions}/{{id:guid}}/close";
 
     internal const string ClientKeys = $"{BaseRoute}/client-keys";
+    internal const string ClientKeysTable = $"{ClientKeys}/table";
     internal const string ClientKeyDeleteTemplate = $"{ClientKeys}/{{id:guid}}/delete";
 
     internal const string EventActions = $"{BaseRoute}/event-actions";

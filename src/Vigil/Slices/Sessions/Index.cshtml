@@ -3,6 +3,9 @@
 
 <div class="@DashboardStyles.DashboardToolbar">
   <h2 class="@DashboardStyles.ToolbarTitle">Sessions</h2>
+  <div class="@DashboardStyles.ToolbarActions">
+    <button type="button" class="@DashboardStyles.ButtonWithIcon" onclick="window.location.href='@UiRoutes.Sessions'">@(new HtmlString(DashboardIcons.Reset)) Reset filters</button>
+  </div>
 </div>
 <div class="table-scroll">
   <table>

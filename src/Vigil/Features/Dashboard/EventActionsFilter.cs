@@ -6,11 +6,13 @@ internal static class EventActionsFilter
 {
     internal const string WebhookType = "webhook";
     internal const string CommandType = "command";
+    internal const string Ungrouped = "__ungrouped__";
 
     internal static IEnumerable<EventAction> Apply(
         IEnumerable<EventAction> eventActions,
         IReadOnlyCollection<string>? types,
-        IReadOnlyCollection<string>? events)
+        IReadOnlyCollection<string>? events,
+        IReadOnlyCollection<string>? groups)
     {
         if (types is { Count: > 0 })
         {
@@ -24,6 +26,9 @@ internal static class EventActionsFilter
 
         if (events is { Count: > 0 })
             eventActions = eventActions.Where(a => events.Contains(a.Event.ToString()));
+
+        if (groups is { Count: > 0 })
+            eventActions = eventActions.Where(a => groups.Contains(string.IsNullOrWhiteSpace(a.Group) ? Ungrouped : a.Group));
 
         return eventActions;
     }

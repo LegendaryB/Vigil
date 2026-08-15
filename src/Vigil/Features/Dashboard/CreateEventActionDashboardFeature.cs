@@ -63,7 +63,19 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
                         .Select(e => new ColumnFilterOption(e.ToString(), e.ToDisplayName(), Checked: true))
                         .ToList());
 
-                var model = new EventActionsIndexModel(repository.Get().ToList(), error, knownGroups, typeFilter, eventFilter);
+                var allEventActions = repository.Get();
+
+                var groupFilter = GroupColumnFilterBuilder.Build(
+                    allEventActions.Select(a => a.Group),
+                    "group-filter-popover",
+                    "group-filter-list",
+                    "group",
+                    UiRoutes.EventActionsTable,
+                    $"#{DashboardStyles.EventActionsTableBodyId}",
+                    selected: null,
+                    EventActionsFilter.Ungrouped);
+
+                var model = new EventActionsIndexModel(allEventActions.ToList(), error, knownGroups, typeFilter, eventFilter, groupFilter);
 
                 return Results.RazorSlice<_Content, EventActionsIndexModel>(model);
             })

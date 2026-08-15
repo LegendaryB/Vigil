@@ -16,8 +16,8 @@
   <td><span class="status-dot" title="@(isOpen ? "Open" : "Closed")" style="@dotStyle"></span></td>
   <td>@session.ClientName</td>
   <td>@session.CheckedInAt.ToString("u")</td>
-  <td>@(session.CheckedOutAt is { } checkedOutAt ? checkedOutAt.ToString("u") : "-")</td>
-  <td>@(session.LastSeenAt is { } lastSeenAt ? lastSeenAt.ToString("u") : "-")</td>
+  <td>@(session.CheckedOutAt is { } checkedOutAt ? checkedOutAt.ToString("u") : "")</td>
+  <td>@(session.LastSeenAt is { } lastSeenAt ? lastSeenAt.ToString("u") : "")</td>
   <td>
     <div class="@DashboardStyles.ActionsCell">
       <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
@@ -27,8 +27,8 @@
         @DashboardDialogs.BuildReadOnlyField("Client key Id", session.ClientKeyId.ToString())
         @DashboardDialogs.BuildReadOnlyField("Client", session.ClientName)
         @DashboardDialogs.BuildReadOnlyField("Checked in", session.CheckedInAt.ToString("u"))
-        @DashboardDialogs.BuildReadOnlyField("Checked out", session.CheckedOutAt is { } co ? co.ToString("u") : "-")
-        @DashboardDialogs.BuildReadOnlyField("Last seen", session.LastSeenAt is { } ls ? ls.ToString("u") : "-")
+        @DashboardDialogs.BuildReadOnlyField("Checked out", session.CheckedOutAt is { } co ? co.ToString("u") : "")
+        @DashboardDialogs.BuildReadOnlyField("Last seen", session.LastSeenAt is { } ls ? ls.ToString("u") : "")
         @DashboardDialogs.BuildReadOnlyTextArea("Metadata", metadataJson)
       </dialog>
       @if (isOpen)

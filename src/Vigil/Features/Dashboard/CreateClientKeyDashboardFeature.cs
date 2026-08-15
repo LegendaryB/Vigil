@@ -33,7 +33,19 @@ internal class CreateClientKeyDashboardFeature : IUiEndpoint
                         error = createResult.ValidationErrors.FirstOrDefault()?.ErrorMessage ?? "Could not create client key.";
                 }
 
-                var model = new ClientKeysIndexModel(repository.Get().ToList(), error);
+                var allClientKeys = repository.Get();
+
+                var groupFilter = GroupColumnFilterBuilder.Build(
+                    allClientKeys.Select(k => k.Group),
+                    "group-filter-popover",
+                    "group-filter-list",
+                    "group",
+                    UiRoutes.ClientKeysTable,
+                    $"#{DashboardStyles.ClientKeysTableBodyId}",
+                    selected: null,
+                    ClientKeysFilter.Ungrouped);
+
+                var model = new ClientKeysIndexModel(allClientKeys.ToList(), error, groupFilter);
 
                 return Results.RazorSlice<_Content, ClientKeysIndexModel>(model);
             })

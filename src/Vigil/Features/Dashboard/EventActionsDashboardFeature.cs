@@ -16,7 +16,8 @@ internal class EventActionsDashboardFeature : IUiEndpoint
                 EventActionRepository repository,
                 ClientKeyRepository clientKeyRepository,
                 string[]? type = null,
-                [FromQuery(Name = "event")] string[]? events = null) =>
+                [FromQuery(Name = "event")] string[]? events = null,
+                string[]? group = null) =>
             {
                 var knownGroups = clientKeyRepository.Get()
                     .Select(k => k.Group)
@@ -26,7 +27,8 @@ internal class EventActionsDashboardFeature : IUiEndpoint
                     .OrderBy(g => g)
                     .ToList();
 
-                var eventActions = EventActionsFilter.Apply(repository.Get(), type, events).ToList();
+                var allEventActions = repository.Get();
+                var eventActions = EventActionsFilter.Apply(allEventActions, type, events, group).ToList();
 
                 var typeFilter = new ColumnFilterModel(
                     "type-filter-popover",
@@ -49,7 +51,17 @@ internal class EventActionsDashboardFeature : IUiEndpoint
                         .Select(e => new ColumnFilterOption(e.ToString(), e.ToDisplayName(), EventActionsFilter.IsChecked(events, e.ToString())))
                         .ToList());
 
-                var model = new EventActionsIndexModel(eventActions, Error: null, knownGroups, typeFilter, eventFilter);
+                var groupFilter = GroupColumnFilterBuilder.Build(
+                    allEventActions.Select(a => a.Group),
+                    "group-filter-popover",
+                    "group-filter-list",
+                    "group",
+                    UiRoutes.EventActionsTable,
+                    $"#{DashboardStyles.EventActionsTableBodyId}",
+                    group,
+                    EventActionsFilter.Ungrouped);
+
+                var model = new EventActionsIndexModel(eventActions, Error: null, knownGroups, typeFilter, eventFilter, groupFilter);
 
                 return Results.RazorSlice<EventActionsIndex, EventActionsIndexModel>(model);
             })

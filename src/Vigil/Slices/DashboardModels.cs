@@ -10,14 +10,15 @@ public record LoginPageModel(bool ShowError);
 
 public record SessionsIndexModel(IReadOnlyList<Session> Sessions, ColumnFilterModel StatusFilter);
 
-public record ClientKeysIndexModel(IReadOnlyList<ClientKey> ClientKeys, string? Error);
+public record ClientKeysIndexModel(IReadOnlyList<ClientKey> ClientKeys, string? Error, ColumnFilterModel GroupFilter);
 
 public record EventActionsIndexModel(
     IReadOnlyList<EventAction> EventActions,
     string? Error,
     IReadOnlyList<string> KnownGroups,
     ColumnFilterModel TypeFilter,
-    ColumnFilterModel EventFilter);
+    ColumnFilterModel EventFilter,
+    ColumnFilterModel GroupFilter);
 
 public record EventActionDialogModel(string DialogId, string Heading, EventAction? Existing, string? Error, IReadOnlyList<string> KnownGroups);
 

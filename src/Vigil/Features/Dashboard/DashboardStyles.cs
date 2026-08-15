@@ -5,6 +5,7 @@ internal static class DashboardStyles
     internal const string DashboardToolbar = "dashboard-toolbar";
     internal const string ToolbarTitle = "toolbar-title";
     internal const string ToolbarActions = "toolbar-actions";
+    internal const string ButtonWithIcon = "button-with-icon";
     internal const string ActionsCell = "actions-cell";
     internal const string IconButton = "icon-button";
     internal const string ThFilterTrigger = "th-filter-trigger";
@@ -15,6 +16,7 @@ internal static class DashboardStyles
     internal const string FilterPopoverOption = "filter-popover-option";
     internal const string FilterPopoverActions = "filter-popover-actions";
     internal const string FilterSearchInput = "filter-search-input";
+    internal const string FilterNoneMarkerValue = "__filter_none__";
 
     internal const string DialogHeader = "dialog-header";
     internal const string DialogActions = "dialog-actions";

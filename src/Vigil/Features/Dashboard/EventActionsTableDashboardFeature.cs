@@ -12,9 +12,10 @@ internal class EventActionsTableDashboardFeature : IUiEndpoint
         app.MapGet(UiRoutes.EventActionsTable, (
                 EventActionRepository repository,
                 string[]? type = null,
-                [FromQuery(Name = "event")] string[]? events = null) =>
+                [FromQuery(Name = "event")] string[]? events = null,
+                string[]? group = null) =>
             {
-                var eventActions = EventActionsFilter.Apply(repository.Get(), type, events).ToList();
+                var eventActions = EventActionsFilter.Apply(repository.Get(), type, events, group).ToList();
 
                 return Results.RazorSlice<_TableBody, IReadOnlyList<EventAction>>(eventActions);
             })

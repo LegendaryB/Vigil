@@ -105,7 +105,10 @@
     <div class="@DashboardStyles.FormField">
       <label>
         Priority
-        <input type="number" name="priority" value="@(existing?.Priority ?? 0)" readonly="@(readOnly ? "readonly" : null)" />
+        <input type="number" name="priority" value="@(existing?.Priority ?? 1)" min="1"
+               readonly="@(readOnly ? "readonly" : null)"
+               onkeydown="@(readOnly ? null : "if (!['ArrowUp','ArrowDown','Tab'].includes(event.key)) event.preventDefault();")"
+               onpaste="@(readOnly ? null : "event.preventDefault();")" />
       </label>
     </div>
 

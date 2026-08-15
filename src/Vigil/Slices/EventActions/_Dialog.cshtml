@@ -8,6 +8,13 @@
     var command = existing?.Target as CommandTarget;
     var hasError = !readOnly && !string.IsNullOrEmpty(error);
 
+    var eventToggleScript =
+        $"var isGroup = this.value === '{VigilEventType.GroupCheckedOut}';" +
+        $"document.getElementById('{DashboardStyles.GroupFieldId}').style.display = isGroup ? '' : 'none';" +
+        $"document.getElementById('{DashboardStyles.GroupInputId}').required = isGroup;" +
+        "var form = this.closest('form');" +
+        "form.querySelector('button[type=submit]').disabled = !form.checkValidity();";
+
     var toggleScript =
         "var isWebhook = this.value === 'webhook';" +
         $"document.getElementById('{DashboardStyles.WebhookFieldsId}').style.display = isWebhook ? '' : 'none';" +
@@ -29,7 +36,7 @@
     <div class="@DashboardStyles.FormField">
       <label>
         Event
-        <select name="event" disabled="@(readOnly ? "disabled" : null)">
+        <select name="event" disabled="@(readOnly ? "disabled" : null)" onchange="@(readOnly ? null : eventToggleScript)">
           @foreach (var eventType in Enum.GetValues<VigilEventType>())
           {
             <option value="@eventType" selected="@(existing?.Event == eventType ? "selected" : null)" title="@eventType.ToDescription()">@eventType.ToDisplayName()</option>
@@ -37,6 +44,26 @@
         </select>
       </label>
     </div>
+
+    @if (!readOnly)
+    {
+      <div class="@DashboardStyles.FormField" id="@DashboardStyles.GroupFieldId" style="@(existing?.Event == VigilEventType.GroupCheckedOut ? null : "display:none")">
+        <label>
+          Group
+          <select name="group" id="@DashboardStyles.GroupInputId">
+            <option value="">Select a group…</option>
+            @foreach (var group in Model.KnownGroups)
+            {
+              <option value="@group" selected="@(existing?.Group == group ? "selected" : null)">@group</option>
+            }
+          </select>
+        </label>
+      </div>
+    }
+    else if (existing?.Event == VigilEventType.GroupCheckedOut)
+    {
+      @DashboardDialogs.BuildReadOnlyField("Group", existing.Group ?? "-")
+    }
 
     <div class="@DashboardStyles.FormField">
       <label>

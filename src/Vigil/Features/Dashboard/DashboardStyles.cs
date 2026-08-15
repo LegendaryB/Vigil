@@ -28,4 +28,6 @@ internal static class DashboardStyles
     internal const string CommandFieldsId = "command-fields";
     internal const string UrlInputId = "url-input";
     internal const string CommandInputId = "command-input";
+    internal const string GroupFieldId = "group-field";
+    internal const string GroupInputId = "group-input";
 }

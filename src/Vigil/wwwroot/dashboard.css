@@ -1,6 +1,7 @@
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 0.9em 1.2em; text-align: center; line-height: 1.4; }
 th { white-space: nowrap; }
+.table-scroll { width: 100%; overflow-x: auto; }
 
 .topbar {
   position: fixed; top: 0; left: 0; width: 100%; margin: 0;
@@ -34,6 +35,7 @@ th { white-space: nowrap; }
 .dashboard-body {
   padding-top: var(--body-padding-top);
   padding-bottom: 3rem;
+  width: 95%;
   max-width: var(--body-max-width);
 }
 

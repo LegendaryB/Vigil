@@ -7,4 +7,5 @@ public record EventAction(
     VigilEventType Event,
     EventActionTarget Target,
     int Priority,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? Group = null);

@@ -21,6 +21,7 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
 
     public async Task<Result<ClientKey>> CreateKeyAsync(
         string clientName,
+        string? group,
         CancellationToken cancellationToken)
     {
         var result = await MutateAsync(() =>
@@ -38,7 +39,9 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
                 Guid.NewGuid(),
                 clientName,
                 GenerateApiKey(),
-                DateTime.UtcNow
+                DateTime.UtcNow,
+                LastUsedAt: null,
+                Group: group
             );
 
             Entities[clientKey.Id] = clientKey;

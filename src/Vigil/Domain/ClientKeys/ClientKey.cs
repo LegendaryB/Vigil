@@ -5,4 +5,5 @@ public record ClientKey(
     string ClientName,
     string ApiKey,
     DateTime CreatedAt,
-    DateTime? LastUsedAt = null);
+    DateTime? LastUsedAt = null,
+    string? Group = null);

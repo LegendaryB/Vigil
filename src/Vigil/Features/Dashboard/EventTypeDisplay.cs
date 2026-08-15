@@ -13,6 +13,7 @@ internal static class EventTypeDisplay
             VigilEventType.AllClientsCheckedOut => "All clients checked out",
             VigilEventType.ClientOverdue => "Client overdue",
             VigilEventType.ClientForceCheckedOut => "Client force-checked out",
+            VigilEventType.GroupCheckedOut => "Group checked out",
             _ => eventType.ToString()
         };
 
@@ -23,6 +24,7 @@ internal static class EventTypeDisplay
             VigilEventType.AllClientsCheckedOut => "The last open session was closed, leaving no clients checked in.",
             VigilEventType.ClientOverdue => "A client's session has been open longer than the configured retention window.",
             VigilEventType.ClientForceCheckedOut => "An open session was closed by an administrator rather than by the client itself.",
+            VigilEventType.GroupCheckedOut => "Every client key tagged with this group has checked out, or the group's completion timeout elapsed.",
             _ => string.Empty
         };
     }

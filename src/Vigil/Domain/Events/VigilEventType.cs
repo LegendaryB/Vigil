@@ -15,5 +15,8 @@ public enum VigilEventType
     ClientOverdue,
 
     /// <summary>An open session was closed by an administrator rather than by the client itself.</summary>
-    ClientForceCheckedOut
+    ClientForceCheckedOut,
+
+    /// <summary>Every member of a client group has checked out, or the group's completion timeout elapsed.</summary>
+    GroupCheckedOut
 }

@@ -9,6 +9,7 @@ using Vigil.Configuration;
 using Vigil.Domain.ClientKeys;
 using Vigil.Domain.Events;
 using Vigil.Domain.Events.EventActions;
+using Vigil.Domain.Events.Groups;
 using Vigil.Domain.Sessions;
 using Vigil.Endpoints;
 using Vigil.Endpoints.Security;
@@ -36,8 +37,10 @@ public static class Program
             .Configure<EventActionsOptions>(builder.Configuration.GetSection(EventActionsOptions.ConfigurationKey))
             .AddSingleton<EventActionQueue>()
             .AddSingleton<EventActionRepository>()
+            .AddSingleton<GroupCompletionTracker>()
             .AddHostedService<EventActionDispatchService>()
             .AddHostedService<SessionOverdueMonitor>()
+            .AddHostedService<GroupCompletionTimeoutMonitor>()
             .AddHttpClient(nameof(EventActionDispatchService))
             .AddWebhookRetryHandler()
             .Services

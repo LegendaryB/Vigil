@@ -6,4 +6,5 @@ internal record EventPayload(
     Guid? ClientKeyId,
     Guid? SessionId,
     DateTime OccurredAt,
-    IReadOnlyDictionary<string, string>? Metadata = null);
+    IReadOnlyDictionary<string, string>? Metadata = null,
+    string? GroupName = null);

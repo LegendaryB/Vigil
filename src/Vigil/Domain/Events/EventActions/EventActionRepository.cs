@@ -23,6 +23,7 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
         VigilEventType @event,
         EventActionTarget target,
         int priority,
+        string? group,
         CancellationToken cancellationToken)
     {
         var result = await MutateAsync(() =>
@@ -33,12 +34,19 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
                 return ErrorCatalog.EventAction.InvalidPriority();
             }
 
+            if (@event == VigilEventType.GroupCheckedOut && string.IsNullOrWhiteSpace(group))
+                return ErrorCatalog.EventAction.GroupRequired();
+
+            if (@event != VigilEventType.GroupCheckedOut && !string.IsNullOrWhiteSpace(group))
+                return ErrorCatalog.EventAction.GroupNotAllowed();
+
             var eventAction = new EventAction(
                 Guid.NewGuid(),
                 @event,
                 target,
                 priority,
-                DateTime.UtcNow
+                DateTime.UtcNow,
+                group
             );
 
             Entities[eventAction.Id] = eventAction;

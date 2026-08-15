@@ -17,7 +17,7 @@ internal sealed class EventActionDispatchService(
         {
             var orderedActions = eventActionRepository.Get()
                 .Where(a => a.Event == payload.Event)
-                .Where(a => a.Event != VigilEventType.GroupCheckedOut || a.Group == payload.GroupName)
+                .Where(a => !a.Event.IsGroupScoped() || a.Group == payload.GroupName)
                 .OrderBy(a => a.Priority);
 
             foreach (var action in orderedActions)

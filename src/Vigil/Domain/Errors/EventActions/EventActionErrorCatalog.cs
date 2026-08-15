@@ -17,7 +17,7 @@ internal sealed class EventActionErrorCatalog : DomainErrorCatalog
 
     internal const string InvalidPriorityMessage = "Priority must be at least 1.";
 
-    internal const string GroupRequiredMessage = "Group is required when Event is GroupCheckedOut.";
+    internal const string GroupRequiredMessage = "Group is required when Event is GroupCheckedOut or GroupCompletionTimedOut.";
 
-    internal const string GroupNotAllowedMessage = "Group must not be set unless Event is GroupCheckedOut.";
+    internal const string GroupNotAllowedMessage = "Group must not be set unless Event is GroupCheckedOut or GroupCompletionTimedOut.";
 }

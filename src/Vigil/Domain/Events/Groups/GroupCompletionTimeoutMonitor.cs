@@ -42,7 +42,7 @@ internal sealed class GroupCompletionTimeoutMonitor(
             logger.LogGroupCompletionTimedOut(group);
 
             queue.Enqueue(new EventPayload(
-                VigilEventType.GroupCheckedOut,
+                VigilEventType.GroupCompletionTimedOut,
                 null,
                 null,
                 null,

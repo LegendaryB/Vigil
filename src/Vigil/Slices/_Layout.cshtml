@@ -30,6 +30,57 @@
         vigilOpenDialog(dialog.id);
       }
     });
+
+    function vigilToggleFilterPopover(id, event) {
+      event.stopPropagation();
+
+      var popover = document.getElementById(id);
+      var wasOpen = popover.classList.contains('@DashboardStyles.FilterPopoverOpen');
+
+      document.querySelectorAll('.@DashboardStyles.FilterPopover.@DashboardStyles.FilterPopoverOpen').forEach(function (p) {
+        p.classList.remove('@DashboardStyles.FilterPopoverOpen');
+      });
+
+      if (wasOpen) return;
+
+      var trigger = event.currentTarget;
+      var rect = trigger.getBoundingClientRect();
+      var width = popover.offsetWidth || 220;
+      var left = Math.min(rect.left, window.innerWidth - width - 8);
+      left = Math.max(left, 8);
+
+      popover.style.top = (rect.bottom + 4) + 'px';
+      popover.style.left = left + 'px';
+      popover.classList.add('@DashboardStyles.FilterPopoverOpen');
+    }
+
+    function vigilCloseAllFilterPopovers() {
+      document.querySelectorAll('.@DashboardStyles.FilterPopover.@DashboardStyles.FilterPopoverOpen').forEach(function (p) {
+        p.classList.remove('@DashboardStyles.FilterPopoverOpen');
+      });
+    }
+
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.@DashboardStyles.FilterPopover') && !event.target.closest('.@DashboardStyles.ThFilterTrigger')) {
+        vigilCloseAllFilterPopovers();
+      }
+    });
+
+    document.addEventListener('scroll', vigilCloseAllFilterPopovers, true);
+    window.addEventListener('resize', vigilCloseAllFilterPopovers);
+
+    function vigilFilterSearch(input, listId) {
+      var query = input.value.toLowerCase();
+      document.querySelectorAll('#' + listId + ' label').forEach(function (label) {
+        label.style.display = label.textContent.toLowerCase().includes(query) ? '' : 'none';
+      });
+    }
+
+    function vigilFilterSelectAll(checkbox, listId) {
+      document.querySelectorAll('#' + listId + ' input[type=checkbox]').forEach(function (cb) {
+        cb.checked = checkbox.checked;
+      });
+    }
   </script>
 </head>
 <body class="dashboard-body" style="@bodyStyle">

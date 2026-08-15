@@ -1,12 +1,18 @@
 @inherits RazorSlice<SessionsIndexModel>
 @implements IUsesLayout<_Layout, LayoutModel>
 
-@(await RenderPartialAsync<_Filter, bool>(Model.ShowClosed))
+<div class="@DashboardStyles.DashboardToolbar">
+  <h2 class="@DashboardStyles.ToolbarTitle">Sessions</h2>
+</div>
 <div class="table-scroll">
   <table>
     <thead>
       <tr>
-        <th></th>
+        <th>
+          <span class="@DashboardStyles.ThWithFilter">
+            @(await RenderPartialAsync<_ColumnFilter, ColumnFilterModel>(Model.StatusFilter))
+          </span>
+        </th>
         <th>Client</th>
         <th>Checked in</th>
         <th>Checked out</th>

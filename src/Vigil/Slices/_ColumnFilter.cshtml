@@ -1,0 +1,31 @@
+@inherits RazorSlice<ColumnFilterModel>
+
+@{
+    var allChecked = Model.Options.All(o => o.Checked);
+    var toggleOnclick = $"vigilToggleFilterPopover('{Model.PopoverId}', event)";
+}
+<button type="button" class="@DashboardStyles.ThFilterTrigger" onclick="@toggleOnclick" aria-label="Filter" title="Filter">@(new HtmlString(DashboardIcons.Filter))</button>
+<div class="@DashboardStyles.FilterPopover" id="@Model.PopoverId">
+  <input type="text" class="@DashboardStyles.FilterSearchInput" placeholder="Search..." oninput="vigilFilterSearch(this, '@Model.ListId')" />
+  <label class="@DashboardStyles.FilterPopoverOption">
+    <input type="checkbox" checked="@(allChecked ? "checked" : null)" onclick="vigilFilterSelectAll(this, '@Model.ListId')" />
+    Select all
+  </label>
+  <div class="@DashboardStyles.FilterPopoverList" id="@Model.ListId">
+    @foreach (var option in Model.Options)
+    {
+      <label class="@DashboardStyles.FilterPopoverOption">
+        <input type="checkbox" name="@Model.QueryParamName" value="@option.Value" checked="@(option.Checked ? "checked" : null)" />
+        @option.Text
+      </label>
+    }
+  </div>
+  <div class="@DashboardStyles.FilterPopoverActions">
+    <button type="button"
+            hx-get="@Model.TableEndpoint"
+            hx-target="@Model.TableBodyTarget"
+            hx-swap="outerHTML"
+            hx-include="thead input[type=checkbox][name]"
+            onclick="@toggleOnclick">Apply</button>
+  </div>
+</div>

@@ -4,15 +4,19 @@ namespace Vigil.Features.Dashboard;
 
 internal static class SessionsFilter
 {
-    internal static readonly TimeSpan ClosedSessionRetention = TimeSpan.FromDays(7);
+    internal const string OpenStatus = "open";
+    internal const string ClosedStatus = "closed";
 
-    internal static IEnumerable<Session> Apply(IEnumerable<Session> sessions, bool showClosed)
+    internal static IEnumerable<Session> Apply(IEnumerable<Session> sessions, IReadOnlyCollection<string>? statuses)
     {
-        if (!showClosed)
-            return sessions.Where(s => s.CheckedOutAt is null);
+        if (statuses is null or { Count: 0 })
+            statuses = [OpenStatus];
 
-        var cutoff = DateTime.UtcNow - ClosedSessionRetention;
+        var includeOpen = statuses.Contains(OpenStatus);
+        var includeClosed = statuses.Contains(ClosedStatus);
 
-        return sessions.Where(s => s.CheckedOutAt is null || s.CheckedOutAt >= cutoff);
+        return sessions.Where(s =>
+            (includeOpen && s.CheckedOutAt is null) ||
+            (includeClosed && s.CheckedOutAt is not null));
     }
 }

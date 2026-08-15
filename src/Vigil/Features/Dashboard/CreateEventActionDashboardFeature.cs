@@ -42,7 +42,28 @@ internal class CreateEventActionDashboardFeature : IUiEndpoint
                     .OrderBy(g => g)
                     .ToList();
 
-                var model = new EventActionsIndexModel(repository.Get().ToList(), error, knownGroups);
+                var typeFilter = new ColumnFilterModel(
+                    "type-filter-popover",
+                    "type-filter-list",
+                    "type",
+                    UiRoutes.EventActionsTable,
+                    $"#{DashboardStyles.EventActionsTableBodyId}",
+                    [
+                        new ColumnFilterOption(EventActionsFilter.WebhookType, "Webhook", Checked: true),
+                        new ColumnFilterOption(EventActionsFilter.CommandType, "Command", Checked: true)
+                    ]);
+
+                var eventFilter = new ColumnFilterModel(
+                    "event-filter-popover",
+                    "event-filter-list",
+                    "event",
+                    UiRoutes.EventActionsTable,
+                    $"#{DashboardStyles.EventActionsTableBodyId}",
+                    Enum.GetValues<VigilEventType>()
+                        .Select(e => new ColumnFilterOption(e.ToString(), e.ToDisplayName(), Checked: true))
+                        .ToList());
+
+                var model = new EventActionsIndexModel(repository.Get().ToList(), error, knownGroups, typeFilter, eventFilter);
 
                 return Results.RazorSlice<_Content, EventActionsIndexModel>(model);
             })

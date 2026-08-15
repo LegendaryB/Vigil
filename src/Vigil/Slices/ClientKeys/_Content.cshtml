@@ -5,7 +5,10 @@
 }
 <div id="@DashboardStyles.ClientKeysPageId">
   <div class="@DashboardStyles.DashboardToolbar">
-    <button type="button" onclick="@openCreateDialogOnclick">Create new client key</button>
+    <h2 class="@DashboardStyles.ToolbarTitle">Client Keys</h2>
+    <div class="@DashboardStyles.ToolbarActions">
+      <button type="button" onclick="@openCreateDialogOnclick">Create new client key</button>
+    </div>
   </div>
   @(await RenderPartialAsync<_CreateDialog, string?>(Model.Error))
   <div class="table-scroll">

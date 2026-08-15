@@ -3,9 +3,18 @@ namespace Vigil.Features.Dashboard;
 internal static class DashboardStyles
 {
     internal const string DashboardToolbar = "dashboard-toolbar";
+    internal const string ToolbarTitle = "toolbar-title";
+    internal const string ToolbarActions = "toolbar-actions";
     internal const string ActionsCell = "actions-cell";
     internal const string IconButton = "icon-button";
-    internal const string FilterLabel = "filter-label";
+    internal const string ThFilterTrigger = "th-filter-trigger";
+    internal const string ThWithFilter = "th-with-filter";
+    internal const string FilterPopover = "filter-popover";
+    internal const string FilterPopoverOpen = "open";
+    internal const string FilterPopoverList = "filter-popover-list";
+    internal const string FilterPopoverOption = "filter-popover-option";
+    internal const string FilterPopoverActions = "filter-popover-actions";
+    internal const string FilterSearchInput = "filter-search-input";
 
     internal const string DialogHeader = "dialog-header";
     internal const string DialogActions = "dialog-actions";

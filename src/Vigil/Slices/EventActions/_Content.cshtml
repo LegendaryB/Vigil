@@ -5,15 +5,28 @@
 }
 <div id="@DashboardStyles.EventActionsPageId">
   <div class="@DashboardStyles.DashboardToolbar">
-    <button type="button" onclick="@openCreateDialogOnclick">Create new event action</button>
+    <h2 class="@DashboardStyles.ToolbarTitle">Event Actions</h2>
+    <div class="@DashboardStyles.ToolbarActions">
+      <button type="button" onclick="@openCreateDialogOnclick">Create new event action</button>
+    </div>
   </div>
   @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(DashboardStyles.CreateEventActionDialogId, "New event action", null, Model.Error, Model.KnownGroups)))
   <div class="table-scroll">
     <table>
       <thead>
         <tr>
-          <th>Event</th>
-          <th>Type</th>
+          <th>
+            <span class="@DashboardStyles.ThWithFilter">
+              Event
+              @(await RenderPartialAsync<_ColumnFilter, ColumnFilterModel>(Model.EventFilter))
+            </span>
+          </th>
+          <th>
+            <span class="@DashboardStyles.ThWithFilter">
+              Type
+              @(await RenderPartialAsync<_ColumnFilter, ColumnFilterModel>(Model.TypeFilter))
+            </span>
+          </th>
           <th>Target</th>
           <th>Group</th>
           <th>Priority</th>

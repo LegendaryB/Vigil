@@ -41,8 +41,11 @@ Log in with the admin key; it sets an `HttpOnly`, `SameSite=Strict`
 session cookie, separate from the `Admin-Key` header the JSON API uses.
 
 Covers Sessions (see who's checked in, filter/close stuck sessions, view
-metadata), Client Keys (create/delete), and Event Actions (create/delete
-webhook or command targets).
+metadata), Client Keys (create/delete, optionally grouped), and Event
+Actions (create/delete webhook or command targets, optionally scoped to a
+group). Every table column with meaningful distinct values (Status, Type,
+Event, Group) has an Excel-style filter dropdown; a "Reset filters" button
+clears all of them at once.
 
 ## Configuration
 
@@ -51,6 +54,7 @@ webhook or command targets).
 | `AdminKey`                     | Shared secret for admin endpoints. No default; startup fails without it. | *(required)* |
 | `DataDirectory`                | Where `client-keys.json`, `sessions.json`, `event-actions.json` are stored | `./data`     |
 | `EventActions:CheckInTimeout`  | `TimeSpan` before an unresponsive session fires `ClientOverdue`. `null` disables it. | `null`       |
+| `EventActions:GroupCompletionTimeout` | `TimeSpan` a client group can stay incomplete before firing `GroupCompletionTimedOut`. Checked every 30s. `null` disables it. | `null`       |
 
 Standard ASP.NET Core configuration sources (`appsettings.json`, environment variables). Any
 value can also be provided as a Docker secret file at `/run/secrets/<Key>`
@@ -76,13 +80,15 @@ All routes are under `/api/v1`.
 
 | Method | Route                       | Body                              | Notes                          |
 |--------|-----------------------------|------------------------------------|---------------------------------|
-| POST   | `/client-keys/`             | `{ "ClientName": string }`         | `ClientName` required, unique (case-insensitive) |
+| POST   | `/client-keys/`             | `{ "ClientName": string, "Group": string? }` | `ClientName` required, unique (case-insensitive); `Group` optional |
 | GET    | `/client-keys/`             | none                                | Returns `ApiKey` in full        |
 | DELETE | `/client-keys/{id}`         | none                                 |                                  |
 
 `ApiKey` is a base64-encoded 32-byte random value (`RandomNumberGenerator`), returned in full. It's never regenerated or masked.
 
 `GET /client-keys/` also returns `LastUsedAt`: the last time that key was used to check in or check out (not updated by `heartbeat`). `null` if the key has never been used, useful for spotting keys nobody's using anymore.
+
+`Group` is a free-text label with no server-side list of valid values; it's only used to scope `GroupCheckedOut`/`GroupCompletionTimedOut` event actions (see below) to a subset of clients, and to power the Group filter/grouping in the dashboard.
 
 ### Sessions
 
@@ -110,13 +116,14 @@ Request/response body fields:
 
 | Field         | Type                                                                   | Required |
 |----------------|-------------------------------------------------------------------------|----------|
-| `Event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, `ClientOverdue`, or `ClientForceCheckedOut` | yes      |
+| `Event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, `ClientOverdue`, `ClientForceCheckedOut`, `GroupCheckedOut`, or `GroupCompletionTimedOut` | yes      |
 | `Target`       | A webhook or command object, see below                                 | yes      |
-| `Name`         | string                                                                  | no       |
-| `Description`  | string                                                                  | no       |
-| `Priority`     | int, default `0`                                                       | no       |
+| `Priority`     | int, `>= 1`                                                             | yes      |
+| `Group`        | string                                                                  | required if `Event` is `GroupCheckedOut`/`GroupCompletionTimedOut`, otherwise must be omitted |
 
-`Priority`: lower fires first (default `0`). Multiple actions can target the same event; they run in priority order.
+`Priority`: lower fires first, must be `>= 1` (no usable default — omitting it, or sending `0`, is rejected). Multiple actions can target the same event; they run in priority order.
+
+`GroupCheckedOut` fires once every client key tagged with `Group` has checked out. `GroupCompletionTimedOut` fires instead if `EventActions:GroupCompletionTimeout` elapses before that happens — the two are mutually exclusive per "cycle", so a webhook/command can tell success from timeout apart by which event it received. Both need `Group` set on the event action so dispatch knows which group's completions to react to; every other event type must leave `Group` unset.
 
 **Webhook target:**
 
@@ -135,7 +142,7 @@ Request/response body fields:
   `X-Vigil-Timestamp: <unix-seconds>`, `X-Vigil-Signature: sha256=<hex>` where `hex = HMAC-SHA256(Secret, "{timestamp}.{rawBody}")`.
 - `Headers`: static headers merged into every request (e.g. `Authorization`).
 - Both returned unredacted on `GET`/`POST`.
-- POST body: `{ "event", "clientName", "clientKeyId", "sessionId", "occurredAt", "metadata" }`.
+- POST body: `{ "event", "clientName", "clientKeyId", "sessionId", "occurredAt", "metadata", "group" }`. `clientName`/`clientKeyId`/`sessionId` are `null` for group/system-wide events (`GroupCheckedOut`, `GroupCompletionTimedOut`, `AllClientsCheckedOut`); `group` is only set for the two group events.
 - Retry: 3 attempts, exponential backoff (1s base, jittered), honors a `Retry-After` response header, 10s timeout per attempt. Only transient failures (connection errors, timeouts, 5xx) retry; 4xx does not.
 
 **Command target:**
@@ -164,6 +171,7 @@ Request/response body fields:
   | `VIGIL_CLIENT_KEY_ID`     | Client key ID, empty if not applicable               |
   | `VIGIL_SESSION_ID`        | Session ID, empty if not applicable                  |
   | `VIGIL_OCCURRED_AT`       | ISO 8601 timestamp                                   |
+  | `VIGIL_GROUP`             | Group name, empty if not applicable                  |
   | `VIGIL_METADATA_<KEY>`    | One per session metadata entry; key uppercased, non-`[A-Z0-9_]` chars replaced with `_` |
 
 Dispatch runs on a background queue and never blocks the triggering request. A failed webhook/command is logged only; it doesn't affect other actions or the request that triggered it.

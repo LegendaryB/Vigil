@@ -1,5 +1,6 @@
 using Vigil.Domain.ClientKeys;
 using Vigil.Endpoints;
+using Vigil.Slices;
 using Vigil.Slices.ClientKeys;
 
 namespace Vigil.Features.Dashboard;
@@ -12,7 +13,8 @@ internal class ClientKeysTableDashboardFeature : IUiEndpoint
             {
                 var clientKeys = ClientKeysFilter.Apply(repository.Get(), group).ToList();
 
-                return Results.RazorSlice<_TableBody, IReadOnlyList<ClientKey>>(clientKeys);
+                return Results.RazorSlice<_TableBody, ClientKeyTableBodyModel>(
+                    new ClientKeyTableBodyModel(clientKeys, Error: null, ErrorEntityId: null));
             })
             .RequireAuthorization()
             .ExcludeFromDescription();

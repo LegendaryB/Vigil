@@ -64,6 +64,53 @@ internal sealed class EventActionRepository : JsonFileRepository<EventAction>
         return result;
     }
 
+    public async Task<Result<EventAction>> UpdateAsync(
+        Guid id,
+        EventActionTarget target,
+        int priority,
+        string? group,
+        CancellationToken cancellationToken)
+    {
+        var result = await MutateAsync(() =>
+        {
+            if (!Entities.TryGetValue(id, out var existing))
+            {
+                Logger.LogEventActionNotFoundForDeletion(id);
+                return ErrorCatalog.EventAction.EventActionNotFound(id);
+            }
+
+            if (priority < 1)
+            {
+                Logger.LogEventActionInvalidPriority(priority);
+                return ErrorCatalog.EventAction.InvalidPriority();
+            }
+
+            if (existing.Event.IsGroupScoped() && string.IsNullOrWhiteSpace(group))
+                return ErrorCatalog.EventAction.GroupRequired();
+
+            if (!existing.Event.IsGroupScoped() && !string.IsNullOrWhiteSpace(group))
+                return ErrorCatalog.EventAction.GroupNotAllowed();
+
+            if (target.GetType() != existing.Target.GetType())
+                return ErrorCatalog.EventAction.TargetTypeCannotChange();
+
+            var updated = existing with { Target = target, Priority = priority, Group = group };
+
+            Entities[id] = updated;
+
+            return Result.Success(updated);
+        }, cancellationToken);
+
+        if (!result.IsSuccess)
+            return result;
+
+        Logger.LogEventActionCreated(result.Value.Id, result.Value.Event);
+
+        await PersistAsync(cancellationToken);
+
+        return result;
+    }
+
     public async Task<Result> DeleteAsync(
         Guid id,
         CancellationToken cancellationToken)

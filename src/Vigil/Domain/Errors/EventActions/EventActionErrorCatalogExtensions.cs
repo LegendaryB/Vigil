@@ -49,5 +49,16 @@ internal static class EventActionErrorCatalogExtensions
                 Severity = ValidationSeverity.Error
             });
         }
+
+        internal Result TargetTypeCannotChange()
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = "target",
+                ErrorMessage = EventActionErrorCatalog.TargetTypeCannotChangeMessage,
+                ErrorCode = catalog.TargetTypeCannotChange,
+                Severity = ValidationSeverity.Error
+            });
+        }
     }
 }

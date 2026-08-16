@@ -7,4 +7,6 @@ internal sealed class EventActionsOptions
     public TimeSpan? CheckInTimeout { get; set; }
 
     public TimeSpan? GroupCompletionTimeout { get; set; }
+
+    public TimeSpan? CommandTimeout { get; set; }
 }

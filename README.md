@@ -55,6 +55,7 @@ clears all of them at once.
 | `DataDirectory`                | Where `client-keys.json`, `sessions.json`, `event-actions.json` are stored | `./data`     |
 | `EventActions:CheckInTimeout`  | `TimeSpan` before an unresponsive session fires `ClientOverdue`. `null` disables it. | `null`       |
 | `EventActions:GroupCompletionTimeout` | `TimeSpan` a client group can stay incomplete before firing `GroupCompletionTimedOut`. Checked every 30s. `null` disables it. | `null`       |
+| `EventActions:CommandTimeout`  | `TimeSpan` a command is allowed to run before being killed and the attempt counted as failed (subject to retry). `null` disables it — scripts can run indefinitely. | `null`       |
 
 Standard ASP.NET Core configuration sources (`appsettings.json`, environment variables). Any
 value can also be provided as a Docker secret file at `/run/secrets/<Key>`
@@ -161,7 +162,9 @@ Request/response body fields:
 ```
 
 - Runs as a plain OS process, no shell (`Process.Start`, `UseShellExecute: false`).
-- `Environment`: static env vars merged in first; cannot override the `VIGIL_*` vars below (real event data always wins on key collision). Not retried, no timeout.
+- `Environment`: static env vars merged in first; cannot override the `VIGIL_*` vars below (real event data always wins on key collision).
+- Retry: 3 attempts, exponential backoff (1s base, jittered) — same knobs as webhooks. Any failure retries (nonzero exit code, the process failing to start, or a thrown exception); unlike webhooks there's no 4xx-equivalent "permanent failure" signal in an exit code to key off of, so every failure is treated as potentially transient.
+- Timeout: governed by `EventActions:CommandTimeout` (see Configuration), applied per attempt. If it elapses, the process (and its whole tree) is killed before the attempt is retried. Disabled by default — a command can run indefinitely unless configured.
 - Vigil-injected environment variables:
 
   | Variable                 | Value                                              |
@@ -179,5 +182,5 @@ Dispatch runs on a background queue and never blocks the triggering request. A f
 ## Notes & limitations
 
 - Single-instance, file-backed storage (`ConcurrentDictionary` + JSON files under `DataDirectory`, guarded by an in-process semaphore). No clustering; running multiple instances against the same `DataDirectory` will corrupt state.
-- Command targets have no execution timeout and no retry; a hung script blocks that event's dispatch indefinitely.
 - API keys (`AdminKey`, client keys) don't expire or rotate. Revocation is delete-and-reissue (client keys) or change-and-restart (`AdminKey`). `LastUsedAt` on client keys helps spot unused ones manually.
+- Dispatch is a single sequential queue — one event action is awaited fully before the next one starts, across *all* events, not just the one currently firing. A command with retries now enabled against a large `EventActions:CommandTimeout` can block everything else waiting in the queue for up to `attempts × (timeout + backoff)`, worse than a single hung attempt used to block for. Configure `CommandTimeout` conservatively if this matters to you.

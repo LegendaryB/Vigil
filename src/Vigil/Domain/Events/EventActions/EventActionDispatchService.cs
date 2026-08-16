@@ -2,6 +2,11 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Retry;
+using Polly.Timeout;
+using Vigil.Configuration;
 
 namespace Vigil.Domain.Events.EventActions;
 
@@ -9,8 +14,12 @@ internal sealed class EventActionDispatchService(
     EventActionQueue queue,
     EventActionRepository eventActionRepository,
     IHttpClientFactory httpClientFactory,
+    IOptionsMonitor<EventActionsOptions> options,
     ILogger<EventActionDispatchService> logger) : BackgroundService
 {
+    private readonly ResiliencePipeline<CommandAttemptResult> commandResiliencePipeline =
+        BuildCommandResiliencePipeline(options);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await foreach (var payload in queue.ReadAllAsync(stoppingToken))
@@ -102,65 +111,121 @@ internal sealed class EventActionDispatchService(
     {
         try
         {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = command.Command,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
+            var result = await commandResiliencePipeline.ExecuteAsync(
+                ct => new ValueTask<CommandAttemptResult>(ExecuteCommandAttemptAsync(command, payload, ct)),
+                cancellationToken);
 
-            foreach (var argument in command.Arguments)
-                startInfo.ArgumentList.Add(argument);
-
-            if (command.Environment is not null)
-            {
-                foreach (var (key, value) in command.Environment)
-                    startInfo.Environment[key] = value;
-            }
-
-            startInfo.Environment["VIGIL_EVENT"] = payload.Event.ToString();
-            startInfo.Environment["VIGIL_CLIENT_NAME"] = payload.ClientName ?? string.Empty;
-            startInfo.Environment["VIGIL_CLIENT_KEY_ID"] = payload.ClientKeyId?.ToString() ?? string.Empty;
-            startInfo.Environment["VIGIL_SESSION_ID"] = payload.SessionId?.ToString() ?? string.Empty;
-            startInfo.Environment["VIGIL_OCCURRED_AT"] = payload.OccurredAt.ToString("O");
-            startInfo.Environment["VIGIL_GROUP"] = payload.GroupName ?? string.Empty;
-
-            if (payload.Metadata is not null)
-            {
-                foreach (var (key, value) in payload.Metadata)
-                    startInfo.Environment[$"VIGIL_METADATA_{SanitizeEnvironmentVariableKey(key)}"] = value;
-            }
-
-            using var process = Process.Start(startInfo);
-
-            if (process is null)
-            {
-                logger.LogCommandDispatchFailed(payload.Event, command.Command, -1);
-                return;
-            }
-
-            await process.WaitForExitAsync(cancellationToken);
-
-            if (process.ExitCode == 0)
+            if (result.Succeeded)
             {
                 logger.LogCommandDispatched(payload.Event, command.Command);
             }
             else
             {
-                logger.LogCommandDispatchFailed(payload.Event, command.Command, process.ExitCode);
+                logger.LogCommandDispatchFailed(payload.Event, command.Command, result.ExitCode);
 
-                var stderr = await process.StandardError.ReadToEndAsync(cancellationToken);
-
-                if (!string.IsNullOrWhiteSpace(stderr))
-                    logger.LogCommandStandardError(payload.Event, command.Command, stderr.Trim());
+                if (!string.IsNullOrWhiteSpace(result.StandardError))
+                    logger.LogCommandStandardError(payload.Event, command.Command, result.StandardError);
             }
         }
         catch (Exception ex)
         {
             logger.LogCommandDispatchError(ex, payload.Event, command.Command);
         }
+    }
+
+    private static async Task<CommandAttemptResult> ExecuteCommandAttemptAsync(
+        CommandTarget command,
+        EventPayload payload,
+        CancellationToken cancellationToken)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = command.Command,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        foreach (var argument in command.Arguments)
+            startInfo.ArgumentList.Add(argument);
+
+        if (command.Environment is not null)
+        {
+            foreach (var (key, value) in command.Environment)
+                startInfo.Environment[key] = value;
+        }
+
+        startInfo.Environment["VIGIL_EVENT"] = payload.Event.ToString();
+        startInfo.Environment["VIGIL_CLIENT_NAME"] = payload.ClientName ?? string.Empty;
+        startInfo.Environment["VIGIL_CLIENT_KEY_ID"] = payload.ClientKeyId?.ToString() ?? string.Empty;
+        startInfo.Environment["VIGIL_SESSION_ID"] = payload.SessionId?.ToString() ?? string.Empty;
+        startInfo.Environment["VIGIL_OCCURRED_AT"] = payload.OccurredAt.ToString("O");
+        startInfo.Environment["VIGIL_GROUP"] = payload.GroupName ?? string.Empty;
+
+        if (payload.Metadata is not null)
+        {
+            foreach (var (key, value) in payload.Metadata)
+                startInfo.Environment[$"VIGIL_METADATA_{SanitizeEnvironmentVariableKey(key)}"] = value;
+        }
+
+        using var process = Process.Start(startInfo);
+
+        if (process is null)
+            return CommandAttemptResult.ProcessStartFailed;
+
+        try
+        {
+            await process.WaitForExitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!process.HasExited)
+            {
+                try { process.Kill(entireProcessTree: true); }
+                catch { /* best effort */ }
+            }
+
+            throw;
+        }
+
+        if (process.ExitCode == 0)
+            return new CommandAttemptResult(true, 0, null);
+
+        string? stderr = null;
+
+        try
+        {
+            stderr = await process.StandardError.ReadToEndAsync(CancellationToken.None);
+        }
+        catch { /* best effort; don't mask the real exit-code failure */ }
+
+        return new CommandAttemptResult(false, process.ExitCode, string.IsNullOrWhiteSpace(stderr) ? null : stderr.Trim());
+    }
+
+    private static ResiliencePipeline<CommandAttemptResult> BuildCommandResiliencePipeline(
+        IOptionsMonitor<EventActionsOptions> options) =>
+        new ResiliencePipelineBuilder<CommandAttemptResult>()
+            .AddRetry(new RetryStrategyOptions<CommandAttemptResult>
+            {
+                MaxRetryAttempts = 3,
+                BackoffType = DelayBackoffType.Exponential,
+                Delay = TimeSpan.FromSeconds(1),
+                UseJitter = true,
+                ShouldHandle = static args => ValueTask.FromResult(
+                    args.Outcome.Result is { Succeeded: false } ||
+                    args.Outcome.Exception is not null and not OperationCanceledException)
+            })
+            .AddTimeout(new TimeoutStrategyOptions
+            {
+                TimeoutGenerator = _ => ValueTask.FromResult(
+                    options.CurrentValue.CommandTimeout is { } timeout ? timeout : Timeout.InfiniteTimeSpan)
+            })
+            .Build();
+
+    private sealed record CommandAttemptResult(bool Succeeded, int ExitCode, string? StandardError)
+    {
+        internal static readonly CommandAttemptResult ProcessStartFailed = new(false, -1, null);
     }
 
     private static string SanitizeEnvironmentVariableKey(string key)

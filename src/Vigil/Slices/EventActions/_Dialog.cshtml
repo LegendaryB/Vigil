@@ -6,7 +6,8 @@
     var error = Model.Error;
     var webhook = existing?.Target as WebhookTarget;
     var command = existing?.Target as CommandTarget;
-    var hasError = !readOnly && !string.IsNullOrEmpty(error);
+    var hasError = !string.IsNullOrEmpty(error);
+    var touchOnBlur = $"this.classList.add('{DashboardStyles.Touched}')";
 
     var eventToggleScript =
         $"var isGroup = this.value === '{VigilEventType.GroupCheckedOut}' || this.value === '{VigilEventType.GroupCompletionTimedOut}';" +
@@ -27,10 +28,10 @@
 }
 <dialog id="@Model.DialogId" data-reopen="@hasError">
   <form class="event-action-form"
-        hx-post="@(readOnly ? null : UiRoutes.EventActions)"
-        hx-target="@(readOnly ? null : $"#{DashboardStyles.EventActionsPageId}")"
-        hx-swap="@(readOnly ? null : "outerHTML")"
-        oninput="@(readOnly ? null : "this.querySelector('button[type=submit]').disabled = !this.checkValidity()")">
+        hx-post="@(existing is null ? UiRoutes.EventActions : UiRoutes.EventActionUpdate(existing.Id))"
+        hx-target="@($"#{DashboardStyles.EventActionsPageId}")"
+        hx-swap="outerHTML"
+        oninput="this.querySelector('button[type=submit]').disabled = !this.checkValidity()">
     @DashboardDialogs.BuildHeader(Model.Heading)
 
     @if (readOnly)
@@ -67,7 +68,12 @@
     }
     else if (existing is not null && existing.Event.IsGroupScoped())
     {
-      @DashboardDialogs.BuildReadOnlyField("Group", existing.Group ?? "")
+      <div class="@DashboardStyles.FormField">
+        <label>
+          Group
+          <input type="text" name="group" placeholder="Group" value="@existing.Group" required onblur="@touchOnBlur" />
+        </label>
+      </div>
     }
 
     <div class="@DashboardStyles.FormField">
@@ -88,20 +94,20 @@
             Webhook URL
             <input type="text" name="url" placeholder="Webhook URL" value="@webhook?.Url"
                    id="@(readOnly ? null : DashboardStyles.UrlInputId)"
-                   onblur="@(readOnly ? null : $"this.classList.add('{DashboardStyles.Touched}')")"
-                   required="@(!readOnly ? "required" : null)" readonly="@(readOnly ? "readonly" : null)" />
+                   onblur="@touchOnBlur"
+                   required="required" />
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Secret
-            <input type="text" name="secret" placeholder="Secret" value="@webhook?.Secret" readonly="@(readOnly ? "readonly" : null)" />
+            <input type="text" name="secret" placeholder="Secret" value="@webhook?.Secret" />
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Headers, one per line as KEY=VALUE
-            <textarea name="headers" placeholder="Headers, one per line as KEY=VALUE" rows="3" readonly="@(readOnly ? "readonly" : null)">@FormatDictionary(webhook?.Headers)</textarea>
+            <textarea name="headers" placeholder="Headers, one per line as KEY=VALUE" rows="3">@FormatDictionary(webhook?.Headers)</textarea>
           </label>
         </div>
       </div>
@@ -115,20 +121,19 @@
             Command
             <textarea name="command" placeholder="Command" rows="3"
                       id="@(readOnly ? null : DashboardStyles.CommandInputId)"
-                      onblur="@(readOnly ? null : $"this.classList.add('{DashboardStyles.Touched}')")"
-                      readonly="@(readOnly ? "readonly" : null)">@command?.Command</textarea>
+                      onblur="@touchOnBlur">@command?.Command</textarea>
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Arguments, one per line
-            <textarea name="arguments" placeholder="Arguments, one per line" rows="3" readonly="@(readOnly ? "readonly" : null)">@FormatList(command?.Arguments)</textarea>
+            <textarea name="arguments" placeholder="Arguments, one per line" rows="3">@FormatList(command?.Arguments)</textarea>
           </label>
         </div>
         <div class="@DashboardStyles.FormField">
           <label>
             Environment variables, one per line as KEY=VALUE
-            <textarea name="environment" placeholder="Environment variables, one per line as KEY=VALUE" rows="3" readonly="@(readOnly ? "readonly" : null)">@FormatDictionary(command?.Environment)</textarea>
+            <textarea name="environment" placeholder="Environment variables, one per line as KEY=VALUE" rows="3">@FormatDictionary(command?.Environment)</textarea>
           </label>
         </div>
       </div>
@@ -138,9 +143,8 @@
       <label>
         Priority
         <input type="number" name="priority" value="@(existing?.Priority ?? 1)" min="1"
-               readonly="@(readOnly ? "readonly" : null)"
-               onkeydown="@(readOnly ? null : "if (!['ArrowUp','ArrowDown','Tab'].includes(event.key)) event.preventDefault();")"
-               onpaste="@(readOnly ? null : "event.preventDefault();")" />
+               onkeydown="if (!['ArrowUp','ArrowDown','Tab'].includes(event.key)) event.preventDefault();"
+               onpaste="event.preventDefault();" />
       </label>
     </div>
 
@@ -148,12 +152,10 @@
     {
       @DashboardDialogs.BuildReadOnlyField("Created", existing!.CreatedAt.ToString("u"))
     }
-    else
-    {
-      <div class="@DashboardStyles.DialogActions">
-        <button type="submit" disabled="disabled">Create</button>
-      </div>
-    }
+
+    <div class="@DashboardStyles.DialogActions">
+      <button type="submit" disabled="@(readOnly ? null : "disabled")">@(readOnly ? "Save" : "Create")</button>
+    </div>
 
     @if (hasError)
     {

@@ -1,10 +1,11 @@
-@inherits RazorSlice<EventAction>
+@inherits RazorSlice<EventActionRowModel>
 
 @{
-    var eventAction = Model;
+    var eventAction = Model.EventAction;
     var dialogId = DashboardDialogs.DetailsDialogId(eventAction.Id);
     var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
     var deleteConfirm = $"Delete the '{eventAction.Event.ToDisplayName()}' event action?";
+    var dialogError = Model.ErrorEntityId == eventAction.Id ? Model.Error : null;
 
     string TargetType(EventActionTarget target) => target switch
     {
@@ -30,7 +31,7 @@
   <td>
     <div class="@DashboardStyles.ActionsCell">
       <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
-      @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(dialogId, "Event action details", eventAction, null, [])))
+      @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(dialogId, "Event action details", eventAction, dialogError, [])))
       <button class="@DashboardStyles.IconButton" title="Delete" aria-label="Delete"
               hx-post="@UiRoutes.EventActionDelete(eventAction.Id)"
               hx-confirm="@deleteConfirm"

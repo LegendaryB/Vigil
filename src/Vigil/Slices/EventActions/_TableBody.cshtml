@@ -1,8 +1,8 @@
-@inherits RazorSlice<IReadOnlyList<EventAction>>
+@inherits RazorSlice<EventActionTableBodyModel>
 
 <tbody id="@DashboardStyles.EventActionsTableBodyId">
-@foreach (var eventAction in Model.OrderBy(a => a.Event).ThenBy(a => a.Priority))
+@foreach (var eventAction in Model.EventActions.OrderBy(a => a.Event).ThenBy(a => a.Priority))
 {
-    @(await RenderPartialAsync<_Row, EventAction>(eventAction))
+    @(await RenderPartialAsync<_Row, EventActionRowModel>(new EventActionRowModel(eventAction, Model.Error, Model.ErrorEntityId)))
 }
 </tbody>

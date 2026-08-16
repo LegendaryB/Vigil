@@ -59,6 +59,46 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
         return result;
     }
 
+    public async Task<Result<ClientKey>> UpdateKeyAsync(
+        Guid id,
+        string clientName,
+        string? group,
+        CancellationToken cancellationToken)
+    {
+        var result = await MutateAsync(() =>
+        {
+            if (!Entities.TryGetValue(id, out var existing))
+            {
+                Logger.LogClientKeyNotFoundForDeletion(id);
+                return ErrorCatalog.ClientKey.NotFound(id);
+            }
+
+            var exists = Entities.Values.Any(
+                k => k.Id != id && k.ClientName.Equals(clientName, StringComparison.OrdinalIgnoreCase));
+
+            if (exists)
+            {
+                Logger.LogClientNameAlreadyExists(clientName);
+                return ErrorCatalog.ClientKey.ClientNameMustBeUnique();
+            }
+
+            var updated = existing with { ClientName = clientName, Group = group };
+
+            Entities[id] = updated;
+
+            return Result.Success(updated);
+        }, cancellationToken);
+
+        if (!result.IsSuccess)
+            return result;
+
+        Logger.LogClientKeyCreated(result.Value.ClientName, result.Value.Id);
+
+        await PersistAsync(cancellationToken);
+
+        return result;
+    }
+
     public async Task<Result> DeleteKeyAsync(
         Guid id,
         CancellationToken cancellationToken)

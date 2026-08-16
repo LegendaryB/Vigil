@@ -1,0 +1,43 @@
+@inherits RazorSlice<DispatchLogIndexModel>
+@implements IUsesLayout<_Layout, LayoutModel>
+
+<div class="@DashboardStyles.DashboardToolbar">
+  <h2 class="@DashboardStyles.ToolbarTitle">Dispatch Log</h2>
+  <div class="@DashboardStyles.ToolbarActions">
+    <button type="button" class="@DashboardStyles.ButtonWithIcon" onclick="window.location.href='@UiRoutes.DispatchLog'">@(new HtmlString(DashboardIcons.Reset)) Reset filters</button>
+  </div>
+</div>
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <span class="@DashboardStyles.ThWithFilter">
+            Event
+            @(await RenderPartialAsync<_ColumnFilter, ColumnFilterModel>(Model.EventFilter))
+          </span>
+        </th>
+        <th>
+          <span class="@DashboardStyles.ThWithFilter">
+            Type
+            @(await RenderPartialAsync<_ColumnFilter, ColumnFilterModel>(Model.TypeFilter))
+          </span>
+        </th>
+        <th>Destination</th>
+        <th>
+          <span class="@DashboardStyles.ThWithFilter">
+            Outcome
+            @(await RenderPartialAsync<_ColumnFilter, ColumnFilterModel>(Model.OutcomeFilter))
+          </span>
+        </th>
+        <th>Dispatched at</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    @(await RenderPartialAsync<_TableBody, IReadOnlyList<DispatchLogEntry>>(Model.Entries))
+  </table>
+</div>
+
+@functions {
+    public LayoutModel LayoutModel => new("Dispatch Log", true);
+}

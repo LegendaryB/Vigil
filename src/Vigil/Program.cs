@@ -37,6 +37,7 @@ public static class Program
             .Configure<EventActionsOptions>(builder.Configuration.GetSection(EventActionsOptions.ConfigurationKey))
             .AddSingleton<EventActionQueue>()
             .AddSingleton<EventActionRepository>()
+            .AddSingleton<DispatchLogRepository>()
             .AddSingleton<GroupCompletionTracker>()
             .AddHostedService<EventActionDispatchService>()
             .AddHostedService<SessionOverdueMonitor>()

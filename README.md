@@ -41,21 +41,25 @@ Log in with the admin key; it sets an `HttpOnly`, `SameSite=Strict`
 session cookie, separate from the `Admin-Key` header the JSON API uses.
 
 Covers Sessions (see who's checked in, filter/close stuck sessions, view
-metadata), Client Keys (create/delete, optionally grouped), and Event
-Actions (create/delete webhook or command targets, optionally scoped to a
-group). Every table column with meaningful distinct values (Status, Type,
-Event, Group) has an Excel-style filter dropdown; a "Reset filters" button
-clears all of them at once.
+metadata), Client Keys (create/edit/delete, optionally grouped), Event
+Actions (create/edit/delete webhook or command targets, optionally scoped
+to a group — editing a webhook/command locks its event and target type),
+and Dispatch Log (a read-only, filterable history of every dispatch
+attempt — did it fire, did it succeed, what was the status/exit code and
+error). Every table column with meaningful distinct values (Status, Type,
+Event, Group, Outcome) has an Excel-style filter dropdown; a "Reset
+filters" button clears all of them at once.
 
 ## Configuration
 
 | Setting                       | Description                                                  | Default      |
 |--------------------------------|----------------------------------------------------------------|--------------|
 | `AdminKey`                     | Shared secret for admin endpoints. No default; startup fails without it. | *(required)* |
-| `DataDirectory`                | Where `client-keys.json`, `sessions.json`, `event-actions.json` are stored | `./data`     |
+| `DataDirectory`                | Where `client-keys.json`, `sessions.json`, `event-actions.json`, `dispatch-log.json` are stored | `./data`     |
 | `EventActions:CheckInTimeout`  | `TimeSpan` before an unresponsive session fires `ClientOverdue`. `null` disables it. | `null`       |
 | `EventActions:GroupCompletionTimeout` | `TimeSpan` a client group can stay incomplete before firing `GroupCompletionTimedOut`. Checked every 30s. `null` disables it. | `null`       |
 | `EventActions:CommandTimeout`  | `TimeSpan` a command is allowed to run before being killed and the attempt counted as failed (subject to retry). `null` disables it — scripts can run indefinitely. | `null`       |
+| `EventActions:DispatchLogCapacity` | Max number of dispatch log entries kept. Oldest entries are evicted once exceeded. | `1000`       |
 
 Standard ASP.NET Core configuration sources (`appsettings.json`, environment variables). Any
 value can also be provided as a Docker secret file at `/run/secrets/<Key>`
@@ -83,9 +87,10 @@ All routes are under `/api/v1`.
 |--------|-----------------------------|------------------------------------|---------------------------------|
 | POST   | `/client-keys/`             | `{ "ClientName": string, "Group": string? }` | `ClientName` required, unique (case-insensitive); `Group` optional |
 | GET    | `/client-keys/`             | none                                | Returns `ApiKey` in full        |
+| PUT    | `/client-keys/{id}`         | `{ "ClientName": string, "Group": string? }` | Updates name/group only; same uniqueness rule as create |
 | DELETE | `/client-keys/{id}`         | none                                 |                                  |
 
-`ApiKey` is a base64-encoded 32-byte random value (`RandomNumberGenerator`), returned in full. It's never regenerated or masked.
+`ApiKey` is a base64-encoded 32-byte random value (`RandomNumberGenerator`), returned in full. It's never regenerated or masked. `PUT` cannot change it — rotating a key is still delete-and-reissue.
 
 `GET /client-keys/` also returns `LastUsedAt`: the last time that key was used to check in or check out (not updated by `heartbeat`). `null` if the key has never been used, useful for spotting keys nobody's using anymore.
 
@@ -111,9 +116,10 @@ All routes are under `/api/v1`.
 |--------|------------------------------|----------------------------|
 | POST   | `/event-actions/`            | Create                    |
 | GET    | `/event-actions/`            | List                      |
+| PUT    | `/event-actions/{id}`        | Updates `Target`, `Priority`, `Group` only — `Event` and the target type (webhook vs. command) can't change once created; delete and recreate for that |
 | DELETE | `/event-actions/{id}`        |                            |
 
-Request/response body fields:
+Request/response body fields (same shape for create and update, minus `Event` on update):
 
 | Field         | Type                                                                   | Required |
 |----------------|-------------------------------------------------------------------------|----------|
@@ -177,7 +183,29 @@ Request/response body fields:
   | `VIGIL_GROUP`             | Group name, empty if not applicable                  |
   | `VIGIL_METADATA_<KEY>`    | One per session metadata entry; key uppercased, non-`[A-Z0-9_]` chars replaced with `_` |
 
-Dispatch runs on a background queue and never blocks the triggering request. A failed webhook/command is logged only; it doesn't affect other actions or the request that triggered it.
+Dispatch runs on a background queue and never blocks the triggering request. A failed webhook/command doesn't affect other actions or the request that triggered it — every attempt (success or failure) is recorded to the dispatch log (below), in addition to the application log.
+
+### Dispatch Log (`Admin-Key`, read-only)
+
+| Method | Route                        | Notes                    |
+|--------|------------------------------|----------------------------|
+| GET    | `/dispatch-log/`             | Lists recent dispatch attempts, newest first |
+
+One entry per dispatch attempt (webhook or command), regardless of outcome — for commands, that's the final outcome after retries, not one entry per attempt. No POST/DELETE — entries are only ever created by the dispatcher itself, and old ones age out automatically once `EventActions:DispatchLogCapacity` is exceeded (oldest evicted first). Response fields:
+
+| Field           | Type                          | Notes                                                        |
+|------------------|--------------------------------|-----------------------------------------------------------------|
+| `Id`             | guid                          |                                                                   |
+| `EventActionId`  | guid                          | References the event action that fired this attempt — may no longer exist if it was since deleted; every other field on this entry is a snapshot taken at dispatch time, so the entry stays fully readable either way |
+| `Event`          | `VigilEventType`              |                                                                   |
+| `Group`          | string?                       |                                                                   |
+| `TargetType`     | `"webhook"` \| `"command"`    |                                                                   |
+| `Destination`    | string                        | Webhook `Url` or command `Command` only — not headers/secret/arguments/environment |
+| `DispatchedAt`   | datetime                      |                                                                   |
+| `Succeeded`      | bool                          |                                                                   |
+| `StatusCode`     | int?                          | Webhook HTTP status code, `null` for commands                    |
+| `ExitCode`       | int?                          | Command process exit code (`-1` if the process failed to start), `null` for webhooks |
+| `ErrorMessage`   | string?                       | Present when `Succeeded` is `false`: response reason phrase, stderr, or exception message, truncated to 500 characters. Never the full response body or full stdout/stderr, to avoid storing secrets or unbounded output |
 
 ## Notes & limitations
 

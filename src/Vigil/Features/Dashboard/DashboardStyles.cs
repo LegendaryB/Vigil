@@ -28,6 +28,8 @@ internal static class DashboardStyles
 
     internal const string SessionsTableBodyId = "sessions-body";
 
+    internal const string DispatchLogTableBodyId = "dispatch-log-body";
+
     internal const string ClientKeysPageId = "client-keys-page";
     internal const string ClientKeysTableBodyId = "client-keys-body";
     internal const string CreateClientKeyDialogId = "create-client-key-dialog";

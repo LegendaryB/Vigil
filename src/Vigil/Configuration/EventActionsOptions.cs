@@ -9,4 +9,6 @@ internal sealed class EventActionsOptions
     public TimeSpan? GroupCompletionTimeout { get; set; }
 
     public TimeSpan? CommandTimeout { get; set; }
+
+    public int DispatchLogCapacity { get; set; } = 1000;
 }

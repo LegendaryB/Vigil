@@ -1,0 +1,8 @@
+@inherits RazorSlice<IReadOnlyList<DispatchLogEntry>>
+
+<tbody id="@DashboardStyles.DispatchLogTableBodyId">
+@foreach (var entry in Model)
+{
+    @(await RenderPartialAsync<_Row, DispatchLogEntry>(entry))
+}
+</tbody>

@@ -11,7 +11,7 @@
       <button type="button" class="@DashboardStyles.ButtonWithIcon" onclick="@openCreateDialogOnclick">@(new HtmlString(DashboardIcons.Plus)) Create</button>
     </div>
   </div>
-  @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(DashboardStyles.CreateEventActionDialogId, "New event action", null, Model.Error, Model.KnownGroups)))
+  @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(DashboardStyles.CreateEventActionDialogId, "New event action", null, Model.ErrorEntityId is null ? Model.Error : null, Model.KnownGroups)))
   <div class="table-scroll">
     <table>
       <thead>
@@ -40,7 +40,7 @@
           <th>Actions</th>
         </tr>
       </thead>
-      @(await RenderPartialAsync<_TableBody, IReadOnlyList<EventAction>>(Model.EventActions))
+      @(await RenderPartialAsync<_TableBody, EventActionTableBodyModel>(new EventActionTableBodyModel(Model.EventActions, Model.Error, Model.ErrorEntityId)))
     </table>
   </div>
 </div>

@@ -1,10 +1,12 @@
-@inherits RazorSlice<ClientKey>
+@inherits RazorSlice<ClientKeyRowModel>
 
 @{
-    var clientKey = Model;
+    var clientKey = Model.ClientKey;
     var dialogId = DashboardDialogs.DetailsDialogId(clientKey.Id);
     var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
     var deleteConfirm = $"Delete the client key for '{clientKey.ClientName}'? This cannot be undone.";
+    var hasError = Model.Error is not null && Model.ErrorEntityId == clientKey.Id;
+    var touchOnBlur = $"this.classList.add('{DashboardStyles.Touched}')";
 }
 <tr id="client-key-@clientKey.Id">
   <td>@clientKey.ClientName</td>
@@ -15,14 +17,34 @@
   <td>
     <div class="@DashboardStyles.ActionsCell">
       <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
-      <dialog id="@dialogId">
-        @DashboardDialogs.BuildHeader("Client key details")
-        @DashboardDialogs.BuildReadOnlyField("Id", clientKey.Id.ToString())
-        @DashboardDialogs.BuildReadOnlyField("Client", clientKey.ClientName)
-        @DashboardDialogs.BuildReadOnlyField("Group", clientKey.Group ?? "")
-        @DashboardDialogs.BuildReadOnlyField("API Key", clientKey.ApiKey)
-        @DashboardDialogs.BuildReadOnlyField("Created", clientKey.CreatedAt.ToString("u"))
-        @DashboardDialogs.BuildReadOnlyField("Last used", clientKey.LastUsedAt is { } lu ? lu.ToString("u") : "")
+      <dialog id="@dialogId" data-reopen="@hasError">
+        <form hx-post="@UiRoutes.ClientKeyUpdate(clientKey.Id)" hx-target="@($"#{DashboardStyles.ClientKeysPageId}")" hx-swap="outerHTML"
+              oninput="this.querySelector('button[type=submit]').disabled = !this.checkValidity()">
+          @DashboardDialogs.BuildHeader("Client key details")
+          @DashboardDialogs.BuildReadOnlyField("Id", clientKey.Id.ToString())
+          <div class="@DashboardStyles.FormField">
+            <label>
+              Client name
+              <input type="text" name="clientName" placeholder="Client name" value="@clientKey.ClientName" required onblur="@touchOnBlur" />
+            </label>
+          </div>
+          <div class="@DashboardStyles.FormField">
+            <label>
+              Group (optional)
+              <input type="text" name="group" placeholder="Group" value="@clientKey.Group" onblur="@touchOnBlur" />
+            </label>
+          </div>
+          @DashboardDialogs.BuildReadOnlyField("API Key", clientKey.ApiKey)
+          @DashboardDialogs.BuildReadOnlyField("Created", clientKey.CreatedAt.ToString("u"))
+          @DashboardDialogs.BuildReadOnlyField("Last used", clientKey.LastUsedAt is { } lu ? lu.ToString("u") : "")
+          <div class="@DashboardStyles.DialogActions">
+            <button type="submit">Save</button>
+          </div>
+          @if (hasError)
+          {
+            @DashboardDialogs.BuildError(Model.Error!)
+          }
+        </form>
       </dialog>
       <button class="@DashboardStyles.IconButton" title="Delete" aria-label="Delete"
               hx-post="@UiRoutes.ClientKeyDelete(clientKey.Id)"

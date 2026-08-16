@@ -12,6 +12,8 @@ internal sealed class EventActionErrorCatalog : DomainErrorCatalog
 
     internal string GroupNotAllowed => Prefix + "group_not_allowed";
 
+    internal string TargetTypeCannotChange => Prefix + "target_type_cannot_change";
+
     internal static string EventActionNotFoundMessage(Guid id) =>
         EntityNotFoundMessage(nameof(EventAction), id);
 
@@ -20,4 +22,6 @@ internal sealed class EventActionErrorCatalog : DomainErrorCatalog
     internal const string GroupRequiredMessage = "Group is required when Event is GroupCheckedOut or GroupCompletionTimedOut.";
 
     internal const string GroupNotAllowedMessage = "Group must not be set unless Event is GroupCheckedOut or GroupCompletionTimedOut.";
+
+    internal const string TargetTypeCannotChangeMessage = "Target type cannot change; delete and recreate the event action instead.";
 }

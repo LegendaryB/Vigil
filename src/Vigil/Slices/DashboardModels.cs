@@ -10,6 +10,12 @@ public record LoginPageModel(bool ShowError);
 
 public record SessionsIndexModel(IReadOnlyList<Session> Sessions, ColumnFilterModel StatusFilter);
 
+public record DispatchLogIndexModel(
+    IReadOnlyList<DispatchLogEntry> Entries,
+    ColumnFilterModel EventFilter,
+    ColumnFilterModel TypeFilter,
+    ColumnFilterModel OutcomeFilter);
+
 public record ClientKeysIndexModel(
     IReadOnlyList<ClientKey> ClientKeys,
     string? Error,

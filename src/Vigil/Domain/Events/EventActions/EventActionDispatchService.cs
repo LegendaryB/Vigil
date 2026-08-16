@@ -13,10 +13,13 @@ namespace Vigil.Domain.Events.EventActions;
 internal sealed class EventActionDispatchService(
     EventActionQueue queue,
     EventActionRepository eventActionRepository,
+    DispatchLogRepository dispatchLogRepository,
     IHttpClientFactory httpClientFactory,
     IOptionsMonitor<EventActionsOptions> options,
     ILogger<EventActionDispatchService> logger) : BackgroundService
 {
+    private const int ErrorMessageMaxLength = 500;
+
     private readonly ResiliencePipeline<CommandAttemptResult> commandResiliencePipeline =
         BuildCommandResiliencePipeline(options);
 
@@ -34,10 +37,10 @@ internal sealed class EventActionDispatchService(
                 switch (action.Target)
                 {
                     case WebhookTarget webhook:
-                        await DispatchWebhookAsync(webhook, payload, stoppingToken);
+                        await DispatchWebhookAsync(action.Id, webhook, payload, stoppingToken);
                         break;
                     case CommandTarget command:
-                        await DispatchCommandAsync(command, payload, stoppingToken);
+                        await DispatchCommandAsync(action.Id, command, payload, stoppingToken);
                         break;
                 }
             }
@@ -45,6 +48,7 @@ internal sealed class EventActionDispatchService(
     }
 
     private async Task DispatchWebhookAsync(
+        Guid eventActionId,
         WebhookTarget webhook,
         EventPayload payload,
         CancellationToken cancellationToken)
@@ -85,13 +89,32 @@ internal sealed class EventActionDispatchService(
             using var response = await client.SendAsync(request, cancellationToken);
 
             if (response.IsSuccessStatusCode)
+            {
                 logger.LogWebhookDispatched(payload.Event, webhook.Url);
+
+                await RecordDispatchAsync(
+                    eventActionId, payload, "webhook", webhook.Url,
+                    succeeded: true, statusCode: (int)response.StatusCode, exitCode: null, errorMessage: null,
+                    cancellationToken);
+            }
             else
+            {
                 logger.LogWebhookDispatchFailed(payload.Event, webhook.Url, (int)response.StatusCode);
+
+                await RecordDispatchAsync(
+                    eventActionId, payload, "webhook", webhook.Url,
+                    succeeded: false, statusCode: (int)response.StatusCode, exitCode: null,
+                    errorMessage: Truncate(response.ReasonPhrase), cancellationToken);
+            }
         }
         catch (Exception ex)
         {
             logger.LogWebhookDispatchError(ex, payload.Event, webhook.Url);
+
+            await RecordDispatchAsync(
+                eventActionId, payload, "webhook", webhook.Url,
+                succeeded: false, statusCode: null, exitCode: null,
+                errorMessage: Truncate(ex.Message), cancellationToken);
         }
     }
 
@@ -105,6 +128,7 @@ internal sealed class EventActionDispatchService(
     }
 
     private async Task DispatchCommandAsync(
+        Guid eventActionId,
         CommandTarget command,
         EventPayload payload,
         CancellationToken cancellationToken)
@@ -118,6 +142,11 @@ internal sealed class EventActionDispatchService(
             if (result.Succeeded)
             {
                 logger.LogCommandDispatched(payload.Event, command.Command);
+
+                await RecordDispatchAsync(
+                    eventActionId, payload, "command", command.Command,
+                    succeeded: true, statusCode: null, exitCode: result.ExitCode, errorMessage: null,
+                    cancellationToken);
             }
             else
             {
@@ -125,11 +154,21 @@ internal sealed class EventActionDispatchService(
 
                 if (!string.IsNullOrWhiteSpace(result.StandardError))
                     logger.LogCommandStandardError(payload.Event, command.Command, result.StandardError);
+
+                await RecordDispatchAsync(
+                    eventActionId, payload, "command", command.Command,
+                    succeeded: false, statusCode: null, exitCode: result.ExitCode,
+                    errorMessage: Truncate(result.StandardError), cancellationToken);
             }
         }
         catch (Exception ex)
         {
             logger.LogCommandDispatchError(ex, payload.Event, command.Command);
+
+            await RecordDispatchAsync(
+                eventActionId, payload, "command", command.Command,
+                succeeded: false, statusCode: null, exitCode: null,
+                errorMessage: Truncate(ex.Message), cancellationToken);
         }
     }
 
@@ -236,4 +275,34 @@ internal sealed class EventActionDispatchService(
 
         return new string(sanitized);
     }
+
+    private Task RecordDispatchAsync(
+        Guid eventActionId,
+        EventPayload payload,
+        string targetType,
+        string destination,
+        bool succeeded,
+        int? statusCode,
+        int? exitCode,
+        string? errorMessage,
+        CancellationToken cancellationToken)
+    {
+        var entry = new DispatchLogEntry(
+            Guid.NewGuid(),
+            eventActionId,
+            payload.Event,
+            payload.GroupName,
+            targetType,
+            destination,
+            DateTime.UtcNow,
+            succeeded,
+            statusCode,
+            exitCode,
+            errorMessage);
+
+        return dispatchLogRepository.RecordAsync(entry, cancellationToken);
+    }
+
+    private static string? Truncate(string? value) =>
+        value is null or { Length: <= ErrorMessageMaxLength } ? value : value[..ErrorMessageMaxLength];
 }

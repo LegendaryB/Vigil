@@ -21,6 +21,9 @@ internal static class UiRoutes
     internal const string EventActionDeleteTemplate = $"{EventActions}/{{id:guid}}/delete";
     internal const string EventActionUpdateTemplate = $"{EventActions}/{{id:guid}}/update";
 
+    internal const string DispatchLog = $"{BaseRoute}/dispatch-log";
+    internal const string DispatchLogTable = $"{DispatchLog}/table";
+
     internal static string SessionClose(Guid id) => $"{Sessions}/{id}/close";
     internal static string ClientKeyDelete(Guid id) => $"{ClientKeys}/{id}/delete";
     internal static string ClientKeyUpdate(Guid id) => $"{ClientKeys}/{id}/update";

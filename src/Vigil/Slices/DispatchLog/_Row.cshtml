@@ -1,0 +1,37 @@
+@inherits RazorSlice<DispatchLogEntry>
+
+@{
+    var entry = Model;
+    var dialogId = DashboardDialogs.DetailsDialogId(entry.Id);
+    var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
+    var typeLabel = entry.TargetType == "webhook" ? "Webhook" : "Command";
+    var dotStyle = $"--dot-color:{(entry.Succeeded ? "#2e7d32" : "#c62828")}";
+    var detail = entry.TargetType == "webhook"
+        ? (entry.StatusCode is { } statusCode ? statusCode.ToString() : "")
+        : (entry.ExitCode is { } exitCode ? exitCode.ToString() : "");
+}
+<tr id="dispatch-log-@entry.Id">
+  <td>@entry.Event.ToDisplayName()</td>
+  <td>@typeLabel</td>
+  <td><code>@entry.Destination</code></td>
+  <td><span class="status-dot" title="@(entry.Succeeded ? "Succeeded" : "Failed")" style="@dotStyle"></span> @(entry.Succeeded ? "Succeeded" : "Failed")</td>
+  <td>@entry.DispatchedAt.ToString("u")</td>
+  <td>
+    <div class="@DashboardStyles.ActionsCell">
+      <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
+      <dialog id="@dialogId">
+        @DashboardDialogs.BuildHeader("Dispatch details")
+        @DashboardDialogs.BuildReadOnlyField("Id", entry.Id.ToString())
+        @DashboardDialogs.BuildReadOnlyField("Event action Id", entry.EventActionId.ToString())
+        @DashboardDialogs.BuildReadOnlyField("Event", entry.Event.ToDisplayName())
+        @DashboardDialogs.BuildReadOnlyField("Group", entry.Group ?? "")
+        @DashboardDialogs.BuildReadOnlyField("Type", typeLabel)
+        @DashboardDialogs.BuildReadOnlyField("Destination", entry.Destination)
+        @DashboardDialogs.BuildReadOnlyField("Outcome", entry.Succeeded ? "Succeeded" : "Failed")
+        @DashboardDialogs.BuildReadOnlyField("Status/exit code", detail)
+        @DashboardDialogs.BuildReadOnlyField("Dispatched at", entry.DispatchedAt.ToString("u"))
+        @DashboardDialogs.BuildReadOnlyTextArea("Error message", entry.ErrorMessage ?? "")
+      </dialog>
+    </div>
+  </td>
+</tr>

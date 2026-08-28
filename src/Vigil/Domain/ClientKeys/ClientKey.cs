@@ -6,5 +6,4 @@ public record ClientKey(
     string ApiKey,
     DateTime CreatedAt,
     DateTime? LastUsedAt = null,
-    string? Group = null,
-    TimeSpan? ExpectedCheckInInterval = null);
+    string? Group = null);

@@ -15,7 +15,6 @@ internal static class EventTypeDisplay
             VigilEventType.ClientForceCheckedOut => "Client force-checked out",
             VigilEventType.GroupCheckedOut => "Group checked out",
             VigilEventType.GroupCompletionTimedOut => "Group completion timed out",
-            VigilEventType.ClientMissedCheckIn => "Client missed check-in",
             _ => eventType.ToString()
         };
 
@@ -28,7 +27,6 @@ internal static class EventTypeDisplay
             VigilEventType.ClientForceCheckedOut => "An open session was closed by an administrator rather than by the client itself.",
             VigilEventType.GroupCheckedOut => "Every client key tagged with this group has checked out.",
             VigilEventType.GroupCompletionTimedOut => "This group's completion timeout elapsed before every member checked out.",
-            VigilEventType.ClientMissedCheckIn => "A client's expected check-in interval elapsed without a new check-in.",
             _ => string.Empty
         };
     }

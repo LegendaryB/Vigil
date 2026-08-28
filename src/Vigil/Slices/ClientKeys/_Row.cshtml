@@ -14,7 +14,6 @@
   <td><code>@clientKey.ApiKey</code></td>
   <td>@clientKey.CreatedAt.ToString("u")</td>
   <td>@(clientKey.LastUsedAt is { } lastUsedAt ? lastUsedAt.ToString("u") : "")</td>
-  <td>@clientKey.ExpectedCheckInInterval</td>
   <td>
     <div class="@DashboardStyles.ActionsCell">
       <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
@@ -33,12 +32,6 @@
             <label>
               Group (optional)
               <input type="text" name="group" placeholder="Group" value="@clientKey.Group" onblur="@touchOnBlur" />
-            </label>
-          </div>
-          <div class="@DashboardStyles.FormField">
-            <label>
-              Expected check-in interval (optional)
-              <input type="text" name="expectedCheckInInterval" placeholder="e.g. 01:00:00" value="@clientKey.ExpectedCheckInInterval" onblur="@touchOnBlur" />
             </label>
           </div>
           @DashboardDialogs.BuildReadOnlyField("API Key", clientKey.ApiKey)

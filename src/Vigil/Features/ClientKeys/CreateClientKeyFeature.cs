@@ -13,7 +13,7 @@ internal class CreateClientKeyFeature : IEndpoint
 
     public static string Tag => Tags.ClientKeys;
 
-    internal record Request(string ClientName, string? Group = null, TimeSpan? ExpectedCheckInInterval = null);
+    internal record Request(string ClientName, string? Group = null);
 
     private record Response(
         Guid Id,
@@ -21,8 +21,7 @@ internal class CreateClientKeyFeature : IEndpoint
         string ApiKey,
         DateTime CreatedAt,
         DateTime? LastUsedAt,
-        string? Group,
-        TimeSpan? ExpectedCheckInInterval
+        string? Group
     );
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -51,7 +50,6 @@ internal class CreateClientKeyFeature : IEndpoint
                 var createKeyResult = await repository.CreateKeyAsync(
                     req.ClientName,
                     req.Group,
-                    req.ExpectedCheckInInterval,
                     cancellationToken);
 
                 if (createKeyResult.IsSuccess)
@@ -71,8 +69,7 @@ internal class CreateClientKeyFeature : IEndpoint
                     key.ApiKey,
                     key.CreatedAt,
                     key.LastUsedAt,
-                    key.Group,
-                    key.ExpectedCheckInInterval
+                    key.Group
                 ));
 
                 return responseResult.ToProblemDetails();

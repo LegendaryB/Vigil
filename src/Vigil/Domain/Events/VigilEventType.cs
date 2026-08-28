@@ -21,10 +21,7 @@ public enum VigilEventType
     GroupCheckedOut,
 
     /// <summary>A client group's completion timeout elapsed before every member checked out.</summary>
-    GroupCompletionTimedOut,
-
-    /// <summary>A client's expected check-in interval elapsed without a new check-in.</summary>
-    ClientMissedCheckIn
+    GroupCompletionTimedOut
 }
 
 internal static class VigilEventTypeExtensions

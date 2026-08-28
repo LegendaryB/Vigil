@@ -42,7 +42,6 @@ public static class Program
             .AddHostedService<EventActionDispatchService>()
             .AddHostedService<SessionOverdueMonitor>()
             .AddHostedService<GroupCompletionTimeoutMonitor>()
-            .AddHostedService<ClientScheduleMonitor>()
             .AddHttpClient(nameof(EventActionDispatchService))
             .AddWebhookRetryHandler()
             .Services

@@ -4,8 +4,12 @@ Vigil answers one question: is a job, script, or scheduled task actually
 running, and did it actually finish? A client "checks in" when it starts
 and "checks out" when it's done. If it checks in but then goes quiet
 without checking out (crashes, hangs), Vigil notices and can call a
-webhook or run a local script to react. It only tracks clients that have
-checked in at least once; a job that never runs at all isn't detected.
+webhook or run a local script to react. A client key can also be given an
+expected check-in interval, so Vigil notices if a job stops running
+entirely (its trigger silently breaks) rather than only noticing a hung
+in-progress run — but only for client keys that were actually issued and
+have that interval configured; a job whose key was never created has no
+representation in Vigil at all.
 
 For developers: it's a small self-hosted HTTP API with two static API
 keys (admin and client), file-based storage, and a background dispatcher
@@ -41,14 +45,15 @@ Log in with the admin key; it sets an `HttpOnly`, `SameSite=Strict`
 session cookie, separate from the `Admin-Key` header the JSON API uses.
 
 Covers Sessions (see who's checked in, filter/close stuck sessions, view
-metadata), Client Keys (create/edit/delete, optionally grouped), Event
-Actions (create/edit/delete webhook or command targets, optionally scoped
-to a group — editing a webhook/command locks its event and target type),
-and Dispatch Log (a read-only, filterable history of every dispatch
-attempt — did it fire, did it succeed, what was the status/exit code and
-error). Every table column with meaningful distinct values (Status, Type,
-Event, Group, Outcome) has an Excel-style filter dropdown; a "Reset
-filters" button clears all of them at once.
+metadata), Client Keys (create/edit/delete, optionally grouped and given
+an expected check-in interval), Event Actions (create/edit/delete webhook
+or command targets, optionally scoped to a group — editing a
+webhook/command locks its event and target type), and Dispatch Log (a
+read-only, filterable history of every dispatch attempt — did it fire,
+did it succeed, what was the status/exit code and error). Every table
+column with meaningful distinct values (Status, Type, Event, Group,
+Outcome) has an Excel-style filter dropdown; a "Reset filters" button
+clears all of them at once.
 
 ## Configuration
 
@@ -85,9 +90,9 @@ All routes are under `/api/v1`.
 
 | Method | Route                       | Body                              | Notes                          |
 |--------|-----------------------------|------------------------------------|---------------------------------|
-| POST   | `/client-keys/`             | `{ "ClientName": string, "Group": string? }` | `ClientName` required, unique (case-insensitive); `Group` optional |
+| POST   | `/client-keys/`             | `{ "ClientName": string, "Group": string?, "ExpectedCheckInInterval": TimeSpan? }` | `ClientName` required, unique (case-insensitive); `Group`/`ExpectedCheckInInterval` optional |
 | GET    | `/client-keys/`             | none                                | Returns `ApiKey` in full        |
-| PUT    | `/client-keys/{id}`         | `{ "ClientName": string, "Group": string? }` | Updates name/group only; same uniqueness rule as create |
+| PUT    | `/client-keys/{id}`         | `{ "ClientName": string, "Group": string?, "ExpectedCheckInInterval": TimeSpan? }` | Updates name/group/interval only; same uniqueness rule as create |
 | DELETE | `/client-keys/{id}`         | none                                 |                                  |
 
 `ApiKey` is a base64-encoded 32-byte random value (`RandomNumberGenerator`), returned in full. It's never regenerated or masked. `PUT` cannot change it — rotating a key is still delete-and-reissue.
@@ -95,6 +100,8 @@ All routes are under `/api/v1`.
 `GET /client-keys/` also returns `LastUsedAt`: the last time that key was used to check in or check out (not updated by `heartbeat`). `null` if the key has never been used, useful for spotting keys nobody's using anymore.
 
 `Group` is a free-text label with no server-side list of valid values; it's only used to scope `GroupCheckedOut`/`GroupCompletionTimedOut` event actions (see below) to a subset of clients, and to power the Group filter/grouping in the dashboard.
+
+`ExpectedCheckInInterval`, if set, must be a positive `TimeSpan`. Checked every 30s: if `now - (LastUsedAt ?? CreatedAt)` exceeds it, Vigil fires `ClientMissedCheckIn` once (not on every poll) and suppresses re-firing until the client's `LastUsedAt` updates again (a new check-in or check-out) and the interval is re-exceeded a second time. `LastUsedAt` updates on both check-in and check-out, so this fires for "no new run started on schedule," independent of `ClientOverdue` (which is about a single run that's already in progress and open too long) — a client can trigger both, neither, or either one independently.
 
 ### Sessions
 
@@ -123,7 +130,7 @@ Request/response body fields (same shape for create and update, minus `Event` on
 
 | Field         | Type                                                                   | Required |
 |----------------|-------------------------------------------------------------------------|----------|
-| `Event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, `ClientOverdue`, `ClientForceCheckedOut`, `GroupCheckedOut`, or `GroupCompletionTimedOut` | yes      |
+| `Event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, `ClientOverdue`, `ClientForceCheckedOut`, `GroupCheckedOut`, `GroupCompletionTimedOut`, or `ClientMissedCheckIn` | yes      |
 | `Target`       | A webhook or command object, see below                                 | yes      |
 | `Priority`     | int, `>= 1`                                                             | yes      |
 | `Group`        | string                                                                  | required if `Event` is `GroupCheckedOut`/`GroupCompletionTimedOut`, otherwise must be omitted |

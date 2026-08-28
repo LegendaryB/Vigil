@@ -22,6 +22,7 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
     public async Task<Result<ClientKey>> CreateKeyAsync(
         string clientName,
         string? group,
+        TimeSpan? expectedCheckInInterval,
         CancellationToken cancellationToken)
     {
         var result = await MutateAsync(() =>
@@ -41,7 +42,8 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
                 GenerateApiKey(),
                 DateTime.UtcNow,
                 LastUsedAt: null,
-                Group: group
+                Group: group,
+                ExpectedCheckInInterval: expectedCheckInInterval
             );
 
             Entities[clientKey.Id] = clientKey;
@@ -63,6 +65,7 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
         Guid id,
         string clientName,
         string? group,
+        TimeSpan? expectedCheckInInterval,
         CancellationToken cancellationToken)
     {
         var result = await MutateAsync(() =>
@@ -82,7 +85,12 @@ internal sealed class ClientKeyRepository : JsonFileRepository<ClientKey>
                 return ErrorCatalog.ClientKey.ClientNameMustBeUnique();
             }
 
-            var updated = existing with { ClientName = clientName, Group = group };
+            var updated = existing with
+            {
+                ClientName = clientName,
+                Group = group,
+                ExpectedCheckInInterval = expectedCheckInInterval
+            };
 
             Entities[id] = updated;
 

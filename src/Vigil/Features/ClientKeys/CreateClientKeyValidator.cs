@@ -12,5 +12,9 @@ internal class CreateClientKeyRequestValidator : AbstractValidator<CreateClientK
             .NotEmpty()
             .WithMessage(DomainErrorCatalog.PropertyRequiredMessage(nameof(ClientKey.ClientName)))
             .WithErrorCode(ErrorCatalog.ClientKey.PropertyRequired);
+
+        RuleFor(x => x.ExpectedCheckInInterval)
+            .Must(v => v is null || v > TimeSpan.Zero)
+            .WithMessage("Expected check-in interval must be positive.");
     }
 }

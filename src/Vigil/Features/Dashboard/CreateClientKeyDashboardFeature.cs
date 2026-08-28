@@ -18,6 +18,7 @@ internal class CreateClientKeyDashboardFeature : IUiEndpoint
                 var clientName = form["clientName"].ToString();
                 var group = form["group"].ToString();
                 group = string.IsNullOrWhiteSpace(group) ? null : group.Trim();
+                var expectedCheckInIntervalRaw = form["expectedCheckInInterval"].ToString();
 
                 string? error = null;
 
@@ -25,9 +26,13 @@ internal class CreateClientKeyDashboardFeature : IUiEndpoint
                 {
                     error = "Client name is required.";
                 }
+                else if (!TryParseExpectedCheckInInterval(expectedCheckInIntervalRaw, out var expectedCheckInInterval))
+                {
+                    error = "Expected check-in interval must be a valid, positive time span (e.g. 01:00:00).";
+                }
                 else
                 {
-                    var createResult = await repository.CreateKeyAsync(clientName, group, cancellationToken);
+                    var createResult = await repository.CreateKeyAsync(clientName, group, expectedCheckInInterval, cancellationToken);
 
                     if (!createResult.IsSuccess)
                         error = createResult.ValidationErrors.FirstOrDefault()?.ErrorMessage ?? "Could not create client key.";
@@ -51,5 +56,20 @@ internal class CreateClientKeyDashboardFeature : IUiEndpoint
             })
             .RequireAuthorization()
             .ExcludeFromDescription();
+    }
+
+    private static bool TryParseExpectedCheckInInterval(string? raw, out TimeSpan? interval)
+    {
+        interval = null;
+
+        if (string.IsNullOrWhiteSpace(raw))
+            return true;
+
+        if (!TimeSpan.TryParse(raw, out var parsed) || parsed <= TimeSpan.Zero)
+            return false;
+
+        interval = parsed;
+
+        return true;
     }
 }

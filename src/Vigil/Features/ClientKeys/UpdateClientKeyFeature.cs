@@ -13,7 +13,7 @@ internal class UpdateClientKeyFeature : IEndpoint
 
     public static string Tag => Tags.ClientKeys;
 
-    internal record Request(string ClientName, string? Group = null);
+    internal record Request(string ClientName, string? Group = null, TimeSpan? ExpectedCheckInInterval = null);
 
     private record Response(
         Guid Id,
@@ -21,7 +21,8 @@ internal class UpdateClientKeyFeature : IEndpoint
         string ApiKey,
         DateTime CreatedAt,
         DateTime? LastUsedAt,
-        string? Group
+        string? Group,
+        TimeSpan? ExpectedCheckInInterval
     );
 
     public static void MapEndpoint(IEndpointRouteBuilder app)
@@ -52,6 +53,7 @@ internal class UpdateClientKeyFeature : IEndpoint
                     id,
                     req.ClientName,
                     req.Group,
+                    req.ExpectedCheckInInterval,
                     cancellationToken);
 
                 if (updateResult.IsSuccess)
@@ -69,7 +71,8 @@ internal class UpdateClientKeyFeature : IEndpoint
                     key.ApiKey,
                     key.CreatedAt,
                     key.LastUsedAt,
-                    key.Group
+                    key.Group,
+                    key.ExpectedCheckInInterval
                 ));
 
                 return responseResult.ToProblemDetails();

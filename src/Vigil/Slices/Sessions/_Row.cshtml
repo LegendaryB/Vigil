@@ -6,7 +6,7 @@
     var isOpen = session.CheckedOutAt is null;
     var dialogId = DashboardDialogs.DetailsDialogId(session.Id);
     var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
-    var dotStyle = $"--dot-color:{(isOpen ? "#2e7d32" : "#bdbdbd")}";
+    var dotStyle = $"--dot-color:{(isOpen ? "var(--success)" : "var(--text-muted)")}";
     var forceCloseConfirm = $"Force-close the session for '{session.ClientName}'?";
     var metadataJson = session.Metadata is { Count: > 0 }
         ? JsonSerializer.Serialize(session.Metadata, new JsonSerializerOptions { WriteIndented = true })

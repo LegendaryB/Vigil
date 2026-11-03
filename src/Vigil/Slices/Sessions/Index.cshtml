@@ -7,6 +7,20 @@
     <button type="button" class="@DashboardStyles.ButtonWithIcon" onclick="window.location.href='@UiRoutes.Sessions'">@(new HtmlString(DashboardIcons.Reset)) Reset filters</button>
   </div>
 </div>
+<div class="@DashboardStyles.Stats">
+  <div class="@DashboardStyles.StatCard">
+    <div class="label">Open now</div>
+    <div class="value">@Model.Stats.OpenCount</div>
+  </div>
+  <div class="@DashboardStyles.StatCard">
+    <div class="label">Checked out today</div>
+    <div class="value">@Model.Stats.ClosedTodayCount</div>
+  </div>
+  <div class="@DashboardStyles.StatCard">
+    <div class="label">Overdue</div>
+    <div class="value @(Model.Stats.OverdueCount > 0 ? DashboardStyles.StatCardDanger : "")">@Model.Stats.OverdueCount</div>
+  </div>
+</div>
 <div class="table-scroll">
   <table>
     <thead>
@@ -28,5 +42,5 @@
 </div>
 
 @functions {
-    public LayoutModel LayoutModel => new("Sessions", true);
+    public LayoutModel LayoutModel => new("Sessions", true, DashboardPage.Sessions);
 }

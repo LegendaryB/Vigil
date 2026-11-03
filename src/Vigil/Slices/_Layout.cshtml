@@ -1,20 +1,49 @@
 @inherits RazorLayoutSlice<LayoutModel>
 
-@{
-    var bodyPaddingTop = Model.ShowNav ? "5rem" : "13px";
-    var bodyMaxWidth = Model.ShowNav ? "1500px" : "38em";
-    var bodyStyle = $"--body-padding-top:{bodyPaddingTop}; --body-max-width:{bodyMaxWidth}";
-}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>@Model.Title - Vigil</title>
-  <link rel="stylesheet" href="/sakura.css">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('vigil-theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (e) { }
+    })();
+  </script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="/dashboard.css">
   <script src="/htmx.min.js"></script>
   <script>
+    function vigilIsDarkTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      return current
+        ? current === 'dark'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    function vigilSyncThemeToggleIcon() {
+      var button = document.querySelector('.@DashboardStyles.ThemeToggle');
+      if (!button) return;
+      button.innerHTML = vigilIsDarkTheme()
+        ? `@(new HtmlString(DashboardIcons.Sun))`
+        : `@(new HtmlString(DashboardIcons.Moon))`;
+    }
+
+    function vigilToggleTheme() {
+      var next = vigilIsDarkTheme() ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('vigil-theme', next); } catch (e) { }
+      vigilSyncThemeToggleIcon();
+    }
+
+    document.addEventListener('DOMContentLoaded', vigilSyncThemeToggleIcon);
+
     function vigilOpenDialog(id) {
       var dialog = document.getElementById(id);
       dialog.showModal();
@@ -104,31 +133,55 @@
     });
   </script>
 </head>
-<body class="dashboard-body" style="@bodyStyle">
+<body>
   @if (Model.ShowNav)
   {
-    <nav class="topbar">
-      <div class="topbar-inner">
-        <div class="topbar-vigil"><strong>Vigil</strong></div>
-        <div class="topbar-links">
-          <a href="@UiRoutes.Sessions">Sessions</a>
-          <a href="@UiRoutes.ClientKeys">Client Keys</a>
-          <a href="@UiRoutes.EventActions">Event Actions</a>
-          <a href="@UiRoutes.DispatchLog">Dispatch Log</a>
+    <div class="@DashboardStyles.App">
+      <aside class="@DashboardStyles.Sidebar">
+        <div class="@DashboardStyles.Brand">
+          @(new HtmlString(DashboardIcons.Logo))
+          <strong>Vigil</strong>
         </div>
-        <div class="topbar-logout">
+        <div class="@DashboardStyles.NavLabel">Menu</div>
+        <nav>
+          <a class="@DashboardStyles.NavLink @(Model.ActivePage == DashboardPage.Sessions ? DashboardStyles.NavLinkActive : "")" href="@UiRoutes.Sessions">
+            @(new HtmlString(DashboardIcons.NavSessions))
+            <span>Sessions</span>
+          </a>
+          <a class="@DashboardStyles.NavLink @(Model.ActivePage == DashboardPage.ClientKeys ? DashboardStyles.NavLinkActive : "")" href="@UiRoutes.ClientKeys">
+            @(new HtmlString(DashboardIcons.NavClientKeys))
+            <span>Client Keys</span>
+          </a>
+          <a class="@DashboardStyles.NavLink @(Model.ActivePage == DashboardPage.EventActions ? DashboardStyles.NavLinkActive : "")" href="@UiRoutes.EventActions">
+            @(new HtmlString(DashboardIcons.NavEventActions))
+            <span>Event Actions</span>
+          </a>
+          <a class="@DashboardStyles.NavLink @(Model.ActivePage == DashboardPage.DispatchLog ? DashboardStyles.NavLinkActive : "")" href="@UiRoutes.DispatchLog">
+            @(new HtmlString(DashboardIcons.NavDispatchLog))
+            <span>Dispatch Log</span>
+          </a>
+        </nav>
+        <div class="sidebar-meta">
+          <a href="https://github.com/LegendaryB/Vigil" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <span>&copy; 2026 LegendaryB</span>
+        </div>
+        <div class="@DashboardStyles.SidebarFoot">
           <form method="post" action="@UiRoutes.Logout" style="display:inline; margin:0">
             <button type="submit" class="link-button">Logout</button>
           </form>
+          <button type="button" class="@DashboardStyles.ThemeToggle" onclick="vigilToggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+            @(new HtmlString(DashboardIcons.Sun))
+          </button>
         </div>
-      </div>
-    </nav>
+      </aside>
+      <main>
+        @await RenderBodyAsync()
+      </main>
+    </div>
   }
-  @await RenderBodyAsync()
-  <footer class="dashboard-footer">
-    <span>&copy; 2026 LegendaryB. All rights reserved.</span>
-    <span> | </span>
-    <span><a href="https://github.com/LegendaryB/Vigil" target="_blank" rel="noopener noreferrer">GitHub</a></span>
-  </footer>
+  else
+  {
+    @await RenderBodyAsync()
+  }
 </body>
 </html>

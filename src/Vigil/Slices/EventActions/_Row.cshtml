@@ -25,8 +25,13 @@
   <td>@eventAction.Event.ToDisplayName()</td>
   <td>@TargetType(eventAction.Target)</td>
   <td><code>@TargetValue(eventAction.Target)</code></td>
-  <td>@eventAction.Group</td>
-  <td>@eventAction.Priority</td>
+  <td>
+    @if (!string.IsNullOrEmpty(eventAction.Group))
+    {
+      <span class="@DashboardStyles.Tag">@eventAction.Group</span>
+    }
+  </td>
+  <td><span class="@DashboardStyles.PriorityBadge">@eventAction.Priority</span></td>
   <td>@eventAction.CreatedAt.ToString("u")</td>
   <td>
     <div class="@DashboardStyles.ActionsCell">

@@ -19,4 +19,7 @@ internal static class SessionsFilter
             (includeOpen && s.CheckedOutAt is null) ||
             (includeClosed && s.CheckedOutAt is not null));
     }
+
+    internal static bool IsOverdue(Session session, TimeSpan timeout) =>
+        DateTime.UtcNow - (session.LastSeenAt ?? session.CheckedInAt) >= timeout;
 }

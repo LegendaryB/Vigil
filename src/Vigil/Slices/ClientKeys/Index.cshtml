@@ -4,5 +4,5 @@
 @(await RenderPartialAsync<_Content, ClientKeysIndexModel>(Model))
 
 @functions {
-    public LayoutModel LayoutModel => new("Client Keys", true);
+    public LayoutModel LayoutModel => new("Client Keys", true, DashboardPage.ClientKeys);
 }

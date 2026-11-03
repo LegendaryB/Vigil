@@ -10,7 +10,12 @@
 }
 <tr id="client-key-@clientKey.Id">
   <td>@clientKey.ClientName</td>
-  <td>@clientKey.Group</td>
+  <td>
+    @if (!string.IsNullOrEmpty(clientKey.Group))
+    {
+      <span class="@DashboardStyles.Tag">@clientKey.Group</span>
+    }
+  </td>
   <td><code>@clientKey.ApiKey</code></td>
   <td>@clientKey.CreatedAt.ToString("u")</td>
   <td>@(clientKey.LastUsedAt is { } lastUsedAt ? lastUsedAt.ToString("u") : "")</td>

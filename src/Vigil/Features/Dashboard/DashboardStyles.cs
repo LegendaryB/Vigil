@@ -5,6 +5,7 @@ internal static class DashboardStyles
     internal const string DashboardToolbar = "dashboard-toolbar";
     internal const string ToolbarTitle = "toolbar-title";
     internal const string ToolbarActions = "toolbar-actions";
+    internal const string ToolbarHint = "toolbar-hint";
     internal const string ButtonWithIcon = "button-with-icon";
     internal const string ActionsCell = "actions-cell";
     internal const string IconButton = "icon-button";
@@ -30,19 +31,9 @@ internal static class DashboardStyles
 
     internal const string DispatchLogTableBodyId = "dispatch-log-body";
 
-    internal const string ClientKeysPageId = "client-keys-page";
     internal const string ClientKeysTableBodyId = "client-keys-body";
-    internal const string CreateClientKeyDialogId = "create-client-key-dialog";
 
-    internal const string EventActionsPageId = "event-actions-page";
     internal const string EventActionsTableBodyId = "event-actions-body";
-    internal const string CreateEventActionDialogId = "create-event-action-dialog";
-    internal const string WebhookFieldsId = "webhook-fields";
-    internal const string CommandFieldsId = "command-fields";
-    internal const string UrlInputId = "url-input";
-    internal const string CommandInputId = "command-input";
-    internal const string GroupFieldId = "group-field";
-    internal const string GroupInputId = "group-input";
 
     internal const string App = "app";
     internal const string Sidebar = "sidebar";

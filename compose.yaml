@@ -1,4 +1,4 @@
-﻿services:
+services:
   vigil:
     image: vigil
     build:
@@ -9,6 +9,12 @@
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+      - ./configuration:/app/configuration:ro
+    # Values referenced as ${VARIABLE_NAME} in configuration/vigil.yaml
+    # (for example PROCYON_KEY). Keep this file out of git.
+    env_file:
+      - path: ./secrets/vigil.env
+        required: false
     secrets:
       - source: admin_key
         target: AdminKey
@@ -16,4 +22,3 @@
 secrets:
   admin_key:
     file: ./secrets/admin_key.txt
-

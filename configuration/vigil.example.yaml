@@ -1,0 +1,33 @@
+# Copy to vigil.yaml. Vigil reloads this file when it changes.
+# Use ${VARIABLE_NAME} to read a secret from an environment variable
+# (supported in apiKey, secret, url, header values, command, arguments and environment values).
+
+clientKeys:
+  - name: procyon              # unique; renaming creates a new identity
+    apiKey: ${PROCYON_KEY}
+    group: nightly-backup      # optional
+  - name: sirius
+    apiKey: ${SIRIUS_KEY}
+    group: nightly-backup
+
+eventActions:
+  - name: notify-backups-done  # unique; renaming creates a new identity
+    event: GroupCheckedOut     # ClientCheckedIn, ClientCheckedOut, AllClientsCheckedOut,
+                               # ClientOverdue, ClientForceCheckedOut,
+                               # GroupCheckedOut, GroupCompletionTimedOut
+    group: nightly-backup      # required for group events, not allowed otherwise
+    priority: 1                # lowest runs first; default 1
+    webhook:
+      url: https://ntfy.example.com/backups
+      secret: ${NTFY_SIGNING_SECRET}
+      headers:
+        Title: Backups finished
+
+  - name: shut-down-storage
+    event: AllClientsCheckedOut
+    priority: 2
+    command:
+      command: /usr/local/bin/shutdown-storage.sh
+      arguments: ["--graceful"]
+      environment:
+        STORAGE_HOST: nas.local

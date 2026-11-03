@@ -4,6 +4,7 @@ namespace Vigil.Domain.Events.EventActions;
 
 public record EventAction(
     Guid Id,
+    string Name,
     VigilEventType Event,
     EventActionTarget Target,
     int Priority,

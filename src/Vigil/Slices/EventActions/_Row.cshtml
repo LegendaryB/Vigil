@@ -1,11 +1,11 @@
-@inherits RazorSlice<EventActionRowModel>
+@inherits RazorSlice<EventAction>
 
 @{
-    var eventAction = Model.EventAction;
+    var eventAction = Model;
     var dialogId = DashboardDialogs.DetailsDialogId(eventAction.Id);
     var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
-    var deleteConfirm = $"Delete the '{eventAction.Event.ToDisplayName()}' event action?";
-    var dialogError = Model.ErrorEntityId == eventAction.Id ? Model.Error : null;
+    var webhook = eventAction.Target as WebhookTarget;
+    var command = eventAction.Target as CommandTarget;
 
     string TargetType(EventActionTarget target) => target switch
     {
@@ -20,8 +20,12 @@
         CommandTarget commandTarget => commandTarget.Command,
         _ => "-"
     };
+
+    string FormatDictionary(IReadOnlyDictionary<string, string>? values) =>
+        values is null ? string.Empty : string.Join('\n', values.Select(pair => $"{pair.Key}={pair.Value}"));
 }
 <tr id="event-action-@eventAction.Id">
+  <td>@eventAction.Name</td>
   <td>@eventAction.Event.ToDisplayName()</td>
   <td>@TargetType(eventAction.Target)</td>
   <td><code>@TargetValue(eventAction.Target)</code></td>
@@ -32,15 +36,30 @@
     }
   </td>
   <td><span class="@DashboardStyles.PriorityBadge">@eventAction.Priority</span></td>
-  <td>@eventAction.CreatedAt.ToString("u")</td>
   <td>
     <div class="@DashboardStyles.ActionsCell">
       <button type="button" class="@DashboardStyles.IconButton" title="Details" aria-label="Details" onclick="@openDialogOnclick">@(new HtmlString(DashboardIcons.Info))</button>
-      @(await RenderPartialAsync<_Dialog, EventActionDialogModel>(new EventActionDialogModel(dialogId, "Event action details", eventAction, dialogError, [])))
-      <button class="@DashboardStyles.IconButton" title="Delete" aria-label="Delete"
-              hx-post="@UiRoutes.EventActionDelete(eventAction.Id)"
-              hx-confirm="@deleteConfirm"
-              hx-target="closest tr" hx-swap="delete">@(new HtmlString(DashboardIcons.Trash))</button>
+      <dialog id="@dialogId">
+        @DashboardDialogs.BuildHeader("Event action details")
+        @DashboardDialogs.BuildReadOnlyField("Id", eventAction.Id.ToString())
+        @DashboardDialogs.BuildReadOnlyField("Name", eventAction.Name)
+        @DashboardDialogs.BuildReadOnlyField("Event", eventAction.Event.ToDisplayName())
+        @DashboardDialogs.BuildReadOnlyField("Group", eventAction.Group ?? "")
+        @DashboardDialogs.BuildReadOnlyField("Priority", eventAction.Priority.ToString())
+        @DashboardDialogs.BuildReadOnlyField("Target type", TargetType(eventAction.Target))
+        @if (webhook is not null)
+        {
+          @DashboardDialogs.BuildReadOnlyField("Webhook URL", webhook.Url)
+          @DashboardDialogs.BuildReadOnlyField("Secret", webhook.Secret ?? "")
+          @DashboardDialogs.BuildReadOnlyTextArea("Headers", FormatDictionary(webhook.Headers))
+        }
+        @if (command is not null)
+        {
+          @DashboardDialogs.BuildReadOnlyTextArea("Command", command.Command)
+          @DashboardDialogs.BuildReadOnlyTextArea("Arguments", string.Join('\n', command.Arguments))
+          @DashboardDialogs.BuildReadOnlyTextArea("Environment variables", FormatDictionary(command.Environment))
+        }
+      </dialog>
     </div>
   </td>
 </tr>

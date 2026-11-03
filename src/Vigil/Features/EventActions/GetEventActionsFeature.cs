@@ -15,6 +15,7 @@ internal class GetEventActionsFeature : IEndpoint
     private record GetEventActionResponse
     {
         public required Guid Id { get; init; }
+        public required string Name { get; init; }
         public required VigilEventType Event { get; init; }
         public required EventActionTarget Target { get; init; }
         public required int Priority { get; init; }
@@ -33,6 +34,7 @@ internal class GetEventActionsFeature : IEndpoint
                 var response = repository.Get().Select(a => new GetEventActionResponse
                 {
                     Id = a.Id,
+                    Name = a.Name,
                     Event = a.Event,
                     Target = a.Target,
                     Priority = a.Priority,

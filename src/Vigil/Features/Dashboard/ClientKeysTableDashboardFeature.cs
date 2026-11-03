@@ -13,8 +13,7 @@ internal class ClientKeysTableDashboardFeature : IUiEndpoint
             {
                 var clientKeys = ClientKeysFilter.Apply(repository.Get(), group).ToList();
 
-                return Results.RazorSlice<_TableBody, ClientKeyTableBodyModel>(
-                    new ClientKeyTableBodyModel(clientKeys, Error: null, ErrorEntityId: null));
+                return Results.RazorSlice<_TableBody, IReadOnlyList<ClientKey>>(clientKeys);
             })
             .RequireAuthorization()
             .ExcludeFromDescription();

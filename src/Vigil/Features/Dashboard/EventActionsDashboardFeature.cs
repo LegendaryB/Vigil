@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Vigil.Domain.ClientKeys;
 using Vigil.Domain.Events;
 using Vigil.Domain.Events.EventActions;
 using Vigil.Endpoints;
@@ -14,19 +13,10 @@ internal class EventActionsDashboardFeature : IUiEndpoint
     {
         app.MapGet(UiRoutes.EventActions, (
                 EventActionRepository repository,
-                ClientKeyRepository clientKeyRepository,
                 string[]? type = null,
                 [FromQuery(Name = "event")] string[]? events = null,
                 string[]? group = null) =>
             {
-                var knownGroups = clientKeyRepository.Get()
-                    .Select(k => k.Group)
-                    .Where(g => !string.IsNullOrWhiteSpace(g))
-                    .Select(g => g!)
-                    .Distinct()
-                    .OrderBy(g => g)
-                    .ToList();
-
                 var allEventActions = repository.Get();
                 var eventActions = EventActionsFilter.Apply(allEventActions, type, events, group).ToList();
 
@@ -61,7 +51,7 @@ internal class EventActionsDashboardFeature : IUiEndpoint
                     group,
                     EventActionsFilter.Ungrouped);
 
-                var model = new EventActionsIndexModel(eventActions, Error: null, knownGroups, typeFilter, eventFilter, groupFilter);
+                var model = new EventActionsIndexModel(eventActions, typeFilter, eventFilter, groupFilter);
 
                 return Results.RazorSlice<EventActionsIndex, EventActionsIndexModel>(model);
             })

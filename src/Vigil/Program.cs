@@ -1,6 +1,5 @@
 ﻿using System.Text.Json.Serialization;
 using Asp.Versioning;
-using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
@@ -32,6 +31,8 @@ public static class Program
         builder.Services
             .Configure<VigilOptions>(builder.Configuration.Bind)
             .AddSingleton<IValidateOptions<VigilOptions>, VigilOptionsValidator>()
+            .AddSingleton<VigilConfigurationProvider>()
+            .AddSingleton<ClientKeyUsageRepository>()
             .AddSingleton<ClientKeyRepository>()
             .AddSingleton<SessionRepository>()
             .Configure<EventActionsOptions>(builder.Configuration.GetSection(EventActionsOptions.ConfigurationKey))
@@ -64,7 +65,6 @@ public static class Program
                 .AddUniqueNestedTypeSchemaIds())
             .AddExceptionHandler<JsonRequestExceptionHandler>()
             .AddProblemDetails()
-            .AddValidatorsFromAssemblyContaining(typeof(Program), includeInternalTypes: true)
             .ConfigureHttpJsonOptions(options =>
                 options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -111,6 +111,8 @@ public static class Program
                 }));
         }
         
+        app.Services.GetRequiredService<VigilConfigurationProvider>();
+
         await app
             .MapEndpoints()
             .RunAsync();

@@ -41,12 +41,10 @@ Log in with the admin key; it sets an `HttpOnly`, `SameSite=Strict`
 session cookie, separate from the `Admin-Key` header the JSON API uses.
 
 Covers Sessions (see who's checked in, filter/close stuck sessions, view
-metadata), Client Keys (create/edit/delete, optionally grouped), Event
-Actions (create/edit/delete webhook or command targets, optionally scoped
-to a group — editing a webhook/command locks its event and target type),
-and Dispatch Log (a read-only, filterable history of every dispatch
-attempt — did it fire, did it succeed, what was the status/exit code and
-error). Every table column with meaningful distinct values (Status, Type,
+metadata), Client Keys and Event Actions (read-only views of what the
+configuration file defines, see below), and Dispatch Log (a read-only,
+filterable history of every dispatch attempt — did it fire, did it
+succeed, what was the status/exit code and error). Every table column with meaningful distinct values (Status, Type,
 Event, Group, Outcome) has an Excel-style filter dropdown; a "Reset
 filters" button clears all of them at once.
 
@@ -55,7 +53,8 @@ filters" button clears all of them at once.
 | Setting                       | Description                                                  | Default      |
 |--------------------------------|----------------------------------------------------------------|--------------|
 | `AdminKey`                     | Shared secret for admin endpoints. No default; startup fails without it. | *(required)* |
-| `DataDirectory`                | Where `client-keys.json`, `sessions.json`, `event-actions.json`, `dispatch-log.json` are stored | `./data`     |
+| `ConfigurationFile`            | Path to the YAML file that defines client keys and event actions (see below) | `./configuration/vigil.yaml` |
+| `DataDirectory`                | Where `sessions.json`, `dispatch-log.json`, `client-key-usage.json` are stored | `./data`     |
 | `EventActions:CheckInTimeout`  | `TimeSpan` before an unresponsive session fires `ClientOverdue`. `null` disables it. | `null`       |
 | `EventActions:GroupCompletionTimeout` | `TimeSpan` a client group can stay incomplete before firing `GroupCompletionTimedOut`. Checked every 30s. `null` disables it. | `null`       |
 | `EventActions:CommandTimeout`  | `TimeSpan` a command is allowed to run before being killed and the attempt counted as failed (subject to retry). `null` disables it — scripts can run indefinitely. | `null`       |
@@ -67,6 +66,45 @@ value can also be provided as a Docker secret file at `/run/secrets/<Key>`
 
 Logging: Serilog, console + rolling file (`logs/`, 14-day retention, 10 MB/file).
 
+### Configuration file
+
+Client keys and event actions are defined in one YAML file, so they can live
+in git and be rebuilt from scratch. Start from
+[`configuration/vigil.example.yaml`](configuration/vigil.example.yaml).
+
+```yaml
+clientKeys:
+  - name: procyon              # unique (case-insensitive); identity
+    apiKey: ${PROCYON_KEY}
+    group: nightly-backup      # optional
+
+eventActions:
+  - name: notify-backups-done  # unique (case-insensitive); identity
+    event: GroupCheckedOut
+    group: nightly-backup      # required for group events, not allowed otherwise
+    priority: 1                # >= 1, default 1
+    webhook:                   # exactly one of webhook / command
+      url: https://ntfy.example.com/backups
+      secret: ${NTFY_SIGNING_SECRET}
+      headers: { Title: Backups finished }
+    # command:
+    #   command: /usr/local/bin/script.sh
+    #   arguments: ["--flag"]
+    #   environment: { KEY: value }
+```
+
+- **Secrets:** `${VARIABLE_NAME}` is replaced with the environment variable of
+  that name in `apiKey`, `secret`, `url`, header values, `command`, `arguments` and
+  `environment` values. An unset variable is an error, never an empty value. With
+  Docker Compose, put them in `secrets/vigil.env` (referenced by `compose.yaml`).
+- **Reload:** the file is watched. A valid change applies within about a second without a
+  restart. An invalid change is logged and the previous configuration keeps running. An
+  invalid file at startup stops Vigil; a missing file starts it with nothing configured.
+- **Identity:** each entry's ID is derived from its `name`, so sessions and the dispatch
+  log stay linked across restarts and reloads. Renaming an entry creates a new one.
+- **Runtime state** is not configuration: `LastUsedAt` for client keys is kept in
+  `DataDirectory/client-key-usage.json`.
+
 ## Auth
 
 Two static API-key schemes, checked via SHA-256 hash comparison
@@ -74,8 +112,8 @@ Two static API-key schemes, checked via SHA-256 hash comparison
 
 | Header       | Scope                                            |
 |--------------|---------------------------------------------------|
-| `Admin-Key`  | Admin endpoints (client-key mgmt, sessions list, event actions) |
-| `Client-Key` | Per-client key issued via the admin API; used for check-in/check-out/heartbeat |
+| `Admin-Key`  | Admin endpoints (client key and event action listings, sessions list/close, dispatch log) |
+| `Client-Key` | Per-client key defined in the configuration file; used for check-in/check-out/heartbeat |
 
 ## API
 
@@ -83,18 +121,15 @@ All routes are under `/api/v1`.
 
 ### Client Keys (`Admin-Key`)
 
-| Method | Route                       | Body                              | Notes                          |
-|--------|-----------------------------|------------------------------------|---------------------------------|
-| POST   | `/client-keys/`             | `{ "ClientName": string, "Group": string? }` | `ClientName` required, unique (case-insensitive); `Group` optional |
-| GET    | `/client-keys/`             | none                                | Returns `ApiKey` in full        |
-| PUT    | `/client-keys/{id}`         | `{ "ClientName": string, "Group": string? }` | Updates name/group only; same uniqueness rule as create |
-| DELETE | `/client-keys/{id}`         | none                                 |                                  |
+| Method | Route                       | Notes                          |
+|--------|-----------------------------|---------------------------------|
+| GET    | `/client-keys/`             | Lists the client keys from the configuration file. `ApiKey` is returned in full, never masked |
 
-`ApiKey` is a base64-encoded 32-byte random value (`RandomNumberGenerator`), returned in full. It's never regenerated or masked. `PUT` cannot change it — rotating a key is still delete-and-reissue.
+Client keys are created, changed and removed by editing the configuration file; there is no write API.
 
-`GET /client-keys/` also returns `LastUsedAt`: the last time that key was used to check in or check out (not updated by `heartbeat`). `null` if the key has never been used, useful for spotting keys nobody's using anymore.
+`GET /client-keys/` also returns `LastUsedAt`: the last time that key was used to check in or check out (not updated by `heartbeat`). `null` if the key has never been used, useful for spotting keys nobody's using anymore. `CreatedAt` is when this process first saw the entry, not a stored date.
 
-`Group` is a free-text label with no server-side list of valid values; it's only used to scope `GroupCheckedOut`/`GroupCompletionTimedOut` event actions (see below) to a subset of clients, and to power the Group filter/grouping in the dashboard.
+`Group` is a free-text label; it's only used to scope `GroupCheckedOut`/`GroupCompletionTimedOut` event actions (see below) to a subset of clients, and to power the Group filter in the dashboard.
 
 ### Sessions
 
@@ -114,23 +149,23 @@ All routes are under `/api/v1`.
 
 | Method | Route                        | Notes                    |
 |--------|------------------------------|----------------------------|
-| POST   | `/event-actions/`            | Create                    |
-| GET    | `/event-actions/`            | List                      |
-| PUT    | `/event-actions/{id}`        | Updates `Target`, `Priority`, `Group` only — `Event` and the target type (webhook vs. command) can't change once created; delete and recreate for that |
-| DELETE | `/event-actions/{id}`        |                            |
+| GET    | `/event-actions/`            | Lists the event actions from the configuration file |
 
-Request/response body fields (same shape for create and update, minus `Event` on update):
+Event actions are defined in the configuration file (see above). Fields:
 
 | Field         | Type                                                                   | Required |
 |----------------|-------------------------------------------------------------------------|----------|
-| `Event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, `ClientOverdue`, `ClientForceCheckedOut`, `GroupCheckedOut`, or `GroupCompletionTimedOut` | yes      |
-| `Target`       | A webhook or command object, see below                                 | yes      |
-| `Priority`     | int, `>= 1`                                                             | yes      |
-| `Group`        | string                                                                  | required if `Event` is `GroupCheckedOut`/`GroupCompletionTimedOut`, otherwise must be omitted |
+| `name`         | string, unique                                                          | yes      |
+| `event`        | `ClientCheckedIn`, `ClientCheckedOut`, `AllClientsCheckedOut`, `ClientOverdue`, `ClientForceCheckedOut`, `GroupCheckedOut`, or `GroupCompletionTimedOut` | yes      |
+| `webhook` / `command` | A webhook or command object, see below; exactly one            | yes      |
+| `priority`     | int, `>= 1`                                                             | no, default 1 |
+| `group`        | string                                                                  | required if `event` is `GroupCheckedOut`/`GroupCompletionTimedOut`, otherwise must be omitted |
 
-`Priority`: lower fires first, must be `>= 1` (no usable default — omitting it, or sending `0`, is rejected). Multiple actions can target the same event; they run in priority order.
+`priority`: lower fires first, must be `>= 1`. Multiple actions can target the same event; they run in priority order.
 
 `GroupCheckedOut` fires once every client key tagged with `Group` has checked out. `GroupCompletionTimedOut` fires instead if `EventActions:GroupCompletionTimeout` elapses before that happens — the two are mutually exclusive per "cycle", so a webhook/command can tell success from timeout apart by which event it received. Both need `Group` set on the event action so dispatch knows which group's completions to react to; every other event type must leave `Group` unset.
+
+The target examples below show the JSON that `GET /event-actions/` returns. In the configuration file the same fields are written under `webhook:` or `command:` in camelCase (`url`, `secret`, `headers`; `command`, `arguments`, `environment`) instead of `$type`.
 
 **Webhook target:**
 
@@ -209,6 +244,6 @@ One entry per dispatch attempt (webhook or command), regardless of outcome — f
 
 ## Notes & limitations
 
-- Single-instance, file-backed storage (`ConcurrentDictionary` + JSON files under `DataDirectory`, guarded by an in-process semaphore). No clustering; running multiple instances against the same `DataDirectory` will corrupt state.
-- API keys (`AdminKey`, client keys) don't expire or rotate. Revocation is delete-and-reissue (client keys) or change-and-restart (`AdminKey`). `LastUsedAt` on client keys helps spot unused ones manually.
+- Single-instance, file-backed runtime state (`ConcurrentDictionary` + JSON files under `DataDirectory`, guarded by an in-process semaphore). No clustering; running multiple instances against the same `DataDirectory` will corrupt state.
+- API keys (`AdminKey`, client keys) don't expire or rotate. Revocation is removing the entry from the configuration file (client keys, applied on reload) or change-and-restart (`AdminKey`). `LastUsedAt` on client keys helps spot unused ones manually.
 - Dispatch is a single sequential queue — one event action is awaited fully before the next one starts, across *all* events, not just the one currently firing. A command with retries now enabled against a large `EventActions:CommandTimeout` can block everything else waiting in the queue for up to `attempts × (timeout + backoff)`, worse than a single hung attempt used to block for. Configure `CommandTimeout` conservatively if this matters to you.

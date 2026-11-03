@@ -316,3 +316,5 @@ dialog pre { text-align: left; }
   main { padding: 20px; }
   .stats { flex-direction: column; }
 }
+
+.toolbar-hint { font-size: 0.8em; color: var(--text-muted); }

@@ -24,7 +24,7 @@ internal class ClientKeysDashboardFeature : IUiEndpoint
                     group,
                     ClientKeysFilter.Ungrouped);
 
-                var model = new ClientKeysIndexModel(clientKeys, Error: null, groupFilter);
+                var model = new ClientKeysIndexModel(clientKeys, groupFilter);
 
                 return Results.RazorSlice<ClientKeysIndex, ClientKeysIndexModel>(model);
             })

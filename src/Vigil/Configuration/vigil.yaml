@@ -1,0 +1,20 @@
+clientKeys:
+  - name: procyon
+    apiKey: ${VIGIL_TEST_KEY_A}
+    group: nightly-backup
+  - name: sirius
+    apiKey: ${VIGIL_TEST_KEY_B}
+    group: nightly-backup
+eventActions:
+  - name: log-group-done
+    event: GroupCheckedOut
+    group: nightly-backup
+    priority: 1
+    webhook:
+      url: http://localhost:9/unreachable
+      secret: ${VIGIL_TEST_KEY_A}
+  - name: all-done
+    event: AllClientsCheckedOut
+    command:
+      command: cmd
+      arguments: ["/c", "echo", "done"]

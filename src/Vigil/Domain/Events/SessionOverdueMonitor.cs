@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Vigil.Configuration;
 using Vigil.Domain.Events.EventActions;
 using Vigil.Domain.Sessions;
+using Vigil.Features.Dashboard;
 
 namespace Vigil.Domain.Events;
 
@@ -42,7 +43,7 @@ internal sealed class SessionOverdueMonitor(
 
         foreach (var session in openSessions)
         {
-            if (now - (session.LastSeenAt ?? session.CheckedInAt) < timeout)
+            if (!SessionsFilter.IsOverdue(session, timeout.Value))
             {
                 _notifiedSessionIds.Remove(session.Id);
                 continue;

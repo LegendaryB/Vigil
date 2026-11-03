@@ -5,7 +5,7 @@
     var dialogId = DashboardDialogs.DetailsDialogId(entry.Id);
     var openDialogOnclick = $"vigilOpenDialog('{dialogId}')";
     var typeLabel = entry.TargetType == "webhook" ? "Webhook" : "Command";
-    var dotStyle = $"--dot-color:{(entry.Succeeded ? "#2e7d32" : "#c62828")}";
+    var dotStyle = $"--dot-color:{(entry.Succeeded ? "var(--success)" : "var(--danger)")}";
     var detail = entry.TargetType == "webhook"
         ? (entry.StatusCode is { } statusCode ? statusCode.ToString() : "")
         : (entry.ExitCode is { } exitCode ? exitCode.ToString() : "");

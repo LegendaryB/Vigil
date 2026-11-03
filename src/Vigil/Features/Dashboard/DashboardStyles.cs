@@ -43,4 +43,20 @@ internal static class DashboardStyles
     internal const string CommandInputId = "command-input";
     internal const string GroupFieldId = "group-field";
     internal const string GroupInputId = "group-input";
+
+    internal const string App = "app";
+    internal const string Sidebar = "sidebar";
+    internal const string Brand = "brand";
+    internal const string NavLabel = "nav-label";
+    internal const string NavLink = "navlink";
+    internal const string NavLinkActive = "active";
+    internal const string SidebarFoot = "sidebar-foot";
+    internal const string ThemeToggle = "theme-toggle";
+
+    internal const string Stats = "stats";
+    internal const string StatCard = "statcard";
+    internal const string StatCardDanger = "danger";
+
+    internal const string Tag = "tag";
+    internal const string PriorityBadge = "priority-badge";
 }

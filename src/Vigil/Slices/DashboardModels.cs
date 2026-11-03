@@ -4,11 +4,22 @@ using Vigil.Domain.Sessions;
 
 namespace Vigil.Slices;
 
-public record LayoutModel(string Title, bool ShowNav = true);
+public enum DashboardPage
+{
+    None,
+    Sessions,
+    ClientKeys,
+    EventActions,
+    DispatchLog
+}
+
+public record LayoutModel(string Title, bool ShowNav = true, DashboardPage ActivePage = DashboardPage.None);
 
 public record LoginPageModel(bool ShowError);
 
-public record SessionsIndexModel(IReadOnlyList<Session> Sessions, ColumnFilterModel StatusFilter);
+public record SessionStats(int OpenCount, int ClosedTodayCount, int OverdueCount);
+
+public record SessionsIndexModel(IReadOnlyList<Session> Sessions, ColumnFilterModel StatusFilter, SessionStats Stats);
 
 public record DispatchLogIndexModel(
     IReadOnlyList<DispatchLogEntry> Entries,
